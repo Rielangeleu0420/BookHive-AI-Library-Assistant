@@ -26,28 +26,20 @@ require_once 'header.php';
     <div class="about-item">
         <div class="about-title">Developers</div>
         <div class="about-content">
-            - Carlitos Miguel Arana<br>
+            - Kyle Bryan Bumatay<br>
             - Janelle Catibog<br>
-            - Joaquin Vito Cunanan<br>
             - Gabrielle Allanah Dizon<br>
-            - Aira Mae Fajardo<br>
-            - Gabriel Sam Oberas<br>
-            - Wade Johnzie Villanueva
-            <br>
-            (As per original `about.html` and `Act3_ProjectProposal_ITS120L_Grp10.pdf` for Janelle Catibog and Gabrielle Allanah Dizon)
+            - Angela Mariel Torres<br>
         </div>
     </div>
 
     <div class="about-item">
         <div class="about-title">Contact</div>
         <ul class="contact-list">
-            <li>cmvarana@mymail.mapua.edu.ph</li>
+            <li>kbpbumatay@mymail.mapua.edu.ph</li>
             <li>jrcatibog@mymail.mapua.edu.ph</li>
-            <li>jvvcunanan@mymail.mapua.edu.ph</li>
             <li>gadizon@mymail.mapua.edu.ph</li>
-            <li>amcfajardo@mymail.mapua.edu.ph</li>
-            <li>gssoberas@mymail.mapua.edu.ph</li>
-            <li>wjcvillanueva@mymail.mapua.edu.ph</li>
+            <li>angelatorres@mymail.mapua.edu.ph</li>
         </ul>
     </div>
 </div>
