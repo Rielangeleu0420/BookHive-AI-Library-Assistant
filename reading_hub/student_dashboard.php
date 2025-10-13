@@ -97,12 +97,12 @@ function getDaysUntilDue($dueDate) {
         <!-- Welcome Section -->
         <div class="flex items-center justify-between">
             <div>
-                <h1 class="text-3xl font-bold text-[var(--dark-charcoal)] mb-2">Welcome back, <?php echo htmlspecialchars(explode(' ', $full_name)[0]); ?>! 🌊</h1>
-                <p class="text-[var(--dark-charcoal)]/70 text-lg">
+                <h1 class="text-3xl font-bold text-primary mb-2">Welcome back, <?php echo htmlspecialchars(explode(' ', $full_name)[0]); ?>! 🌊</h1>
+                <p class="text-secondary text-lg">
                     Explore your digital library with AI-powered assistance and discover new knowledge
                 </p>
             </div>
-            <a href="books_available.php" class="btn btn-info shadow-lg px-6 py-3 rounded-xl">
+            <a href="books_available.php" class="btn btn-info">
                 <i data-lucide="search" class="w-4 h-4 mr-2"></i>
                 Browse Books
             </a>
@@ -110,82 +110,87 @@ function getDaysUntilDue($dueDate) {
 
         <!-- Quick Stats -->
         <div class="grid gap-6 md:grid-cols-5">
-            <div class="card border-0 shadow-lg bg-gradient-to-br from-[var(--card-orange-light)]/10 to-[var(--card-orange-light)]/5 hover:shadow-xl transition-all duration-300">
-                <div class="card-header flex flex-row items-center justify-between space-y-0 pb-2">
-                    <div class="card-title text-sm font-medium text-[var(--dark-charcoal)]">Current Loans</div>
-                    <div class="w-10 h-10 bg-[var(--card-orange-light)] rounded-xl flex items-center justify-center">
+            <!-- Current Loans Card -->
+            <div class="card stat-card-1">
+                <div class="card-header">
+                    <div class="card-title">Current Loans</div>
+                    <div class="w-10 h-10 bg-primary rounded-xl flex items-center justify-center">
                         <i data-lucide="book-marked" class="h-5 w-5 text-white"></i>
                     </div>
                 </div>
                 <div class="card-content">
-                    <div class="text-3xl font-bold text-[var(--dark-charcoal)] mb-1"><?php echo count($current_loans); ?></div>
-                    <p class="text-sm text-[var(--dark-charcoal)]/70">
+                    <div class="text-3xl font-bold text-primary mb-1"><?php echo count($current_loans); ?></div>
+                    <p class="text-sm text-secondary">
                         <?php echo count(array_filter($current_loans, function($loan) { return $loan['status'] === 'overdue'; })); ?> overdue
                     </p>
                 </div>
             </div>
             
-            <div class="card border-0 shadow-lg bg-gradient-to-br from-[var(--card-yellow-light)]/10 to-[var(--card-yellow-light)]/5 hover:shadow-xl transition-all duration-300">
-                <div class="card-header flex flex-row items-center justify-between space-y-0 pb-2">
-                    <div class="card-title text-sm font-medium text-[var(--dark-charcoal)]">Books Read</div>
-                    <div class="w-10 h-10 bg-[var(--card-yellow-light)] rounded-xl flex items-center justify-center">
-                        <i data-lucide="book-open" class="h-5 w-5 text-[var(--dark-charcoal)]"></i>
+            <!-- Books Read Card -->
+            <div class="card stat-card-2">
+                <div class="card-header">
+                    <div class="card-title">Books Read</div>
+                    <div class="w-10 h-10 bg-secondary rounded-xl flex items-center justify-center">
+                        <i data-lucide="book-open" class="h-5 w-5 text-white"></i>
                     </div>
                 </div>
                 <div class="card-content">
-                    <div class="text-3xl font-bold text-[var(--dark-charcoal)] mb-1"><?php echo count($borrowing_history); ?></div>
-                    <p class="text-sm text-[var(--dark-charcoal)]/70">
+                    <div class="text-3xl font-bold text-primary mb-1"><?php echo count($borrowing_history); ?></div>
+                    <p class="text-sm text-secondary">
                         This semester
                     </p>
                 </div>
             </div>
             
-            <div class="card border-0 shadow-lg bg-gradient-to-br from-[var(--card-blue-light)]/10 to-[var(--card-blue-light)]/5 hover:shadow-xl transition-all duration-300">
-                <div class="card-header flex flex-row items-center justify-between space-y-0 pb-2">
-                    <div class="card-title text-sm font-medium text-[var(--dark-charcoal)]">Due Soon</div>
-                    <div class="w-10 h-10 bg-[var(--card-blue-light)] rounded-xl flex items-center justify-center">
+            <!-- Due Soon Card -->
+            <div class="card stat-card-3">
+                <div class="card-header">
+                    <div class="card-title">Due Soon</div>
+                    <div class="w-10 h-10 bg-accent rounded-xl flex items-center justify-center">
                         <i data-lucide="clock" class="h-5 w-5 text-white"></i>
                     </div>
                 </div>
                 <div class="card-content">
-                    <div class="text-3xl font-bold text-[var(--dark-charcoal)] mb-1">
+                    <div class="text-3xl font-bold text-primary mb-1">
                         <?php echo count(array_filter($current_loans, function($loan) { return getDaysUntilDue($loan['due_date']) <= 3 && $loan['status'] !== 'overdue'; })); ?>
                     </div>
-                    <p class="text-sm text-[var(--dark-charcoal)]/70">
+                    <p class="text-sm text-secondary">
                         Within 3 days
                     </p>
                 </div>
             </div>
             
-            <div class="card border-0 shadow-lg bg-gradient-to-br from-[var(--card-pink-light)]/10 to-[var(--card-pink-light)]/5 hover:shadow-xl transition-all duration-300">
-                <div class="card-header flex flex-row items-center justify-between space-y-0 pb-2">
-                    <div class="card-title text-sm font-medium text-[var(--dark-charcoal)]">Overdue</div>
-                    <div class="w-10 h-10 bg-[var(--card-pink-light)] rounded-xl flex items-center justify-center">
+            <!-- Overdue Card -->
+            <div class="card stat-card-4">
+                <div class="card-header">
+                    <div class="card-title">Overdue</div>
+                    <div class="w-10 h-10 bg-danger rounded-xl flex items-center justify-center">
                         <i data-lucide="alert-triangle" class="h-5 w-5 text-white"></i>
                     </div>
                 </div>
                 <div class="card-content">
-                    <div class="text-3xl font-bold text-[var(--card-pink-light)] mb-1">
+                    <div class="text-3xl font-bold text-danger mb-1">
                         <?php echo count(array_filter($current_loans, function($loan) { return $loan['status'] === 'overdue'; })); ?>
                     </div>
-                    <p class="text-sm text-[var(--dark-charcoal)]/70">
+                    <p class="text-sm text-secondary">
                         Needs attention
                     </p>
                 </div>
             </div>
             
-            <div class="card border-0 shadow-lg bg-gradient-to-br from-red-500/10 to-red-600/5 hover:shadow-xl transition-all duration-300">
-                <div class="card-header flex flex-row items-center justify-between space-y-0 pb-2">
-                    <div class="card-title text-sm font-medium text-[var(--dark-charcoal)]">Penalties</div>
-                    <div class="w-10 h-10 bg-red-600 rounded-xl flex items-center justify-center">
+            <!-- Penalties Card -->
+            <div class="card stat-card-5">
+                <div class="card-header">
+                    <div class="card-title">Penalties</div>
+                    <div class="w-10 h-10 bg-success rounded-xl flex items-center justify-center">
                         <span class="text-white font-bold text-lg">₱</span>
                     </div>
                 </div>
                 <div class="card-content">
-                    <div class="text-3xl font-bold text-red-600 mb-1">
+                    <div class="text-3xl font-bold text-success mb-1">
                         ₱<?php echo number_format($total_penalties, 2); ?>
                     </div>
-                    <p class="text-sm text-[var(--dark-charcoal)]/70">
+                    <p class="text-sm text-secondary">
                         Outstanding fees
                     </p>
                 </div>
@@ -193,14 +198,14 @@ function getDaysUntilDue($dueDate) {
         </div>
 
         <div class="grid gap-8 md:grid-cols-2">
-            <!-- Current Loans -->
-            <div class="card border-0 shadow-lg bg-white/95 backdrop-blur-sm">
-                <div class="card-header bg-gradient-to-r from-[var(--card-orange-light)]/10 to-[var(--card-yellow-light)]/10 rounded-t-lg">
-                    <div class="card-title text-xl text-[var(--dark-charcoal)] flex items-center">
-                        <i data-lucide="book-marked" class="w-5 h-5 mr-2 text-[var(--card-orange-light)]"></i>
+            <!-- Current Loans Section -->
+            <div class="section-card">
+                <div class="card-header bg-gradient-to-r">
+                    <div class="card-title text-xl flex items-center">
+                        <i data-lucide="book-marked" class="w-5 h-5 mr-2"></i>
                         Current Loans
                     </div>
-                    <div class="card-description text-[var(--dark-charcoal)]/70">Books you currently have borrowed</div>
+                    <div class="card-description">Books you currently have borrowed</div>
                 </div>
                 <div class="card-content">
                     <div class="space-y-4">
@@ -210,23 +215,25 @@ function getDaysUntilDue($dueDate) {
                                 $daysUntilDue = getDaysUntilDue($book['due_date']);
                                 $penalty = $book['penalty_amount'];
                                 ?>
-                                <div class="flex items-center space-x-3 p-4 border-0 rounded-xl bg-gradient-to-r from-[var(--card-yellow-light)]/5 to-[var(--card-blue-light)]/5 hover:shadow-md transition-all duration-300">
-                                    <div class="w-12 h-16 bg-gradient-to-br from-[var(--card-orange-light)] to-[var(--card-yellow-light)] rounded-lg flex items-center justify-center shadow-lg">
+                                <div class="book-item">
+                                    <div class="book-cover">
                                         <i data-lucide="book-open" class="w-6 h-6 text-white"></i>
                                     </div>
-                                    <div class="flex-1">
-                                        <h4 class="font-medium text-[var(--dark-charcoal)]"><?php echo htmlspecialchars($book['title']); ?></h4>
-                                        <p class="text-sm text-[var(--dark-charcoal)]/70"><?php echo htmlspecialchars($book['author_name'] ?? 'N/A'); ?></p>
-                                        <div class="flex items-center space-x-2 mt-2 flex-wrap">
-                                            <i data-lucide="calendar" class="w-3 h-3 text-[var(--card-blue-light)]"></i>
-                                            <span class="text-xs text-[var(--dark-charcoal)]/70">Due: <?php echo htmlspecialchars($book['due_date']); ?></span>
+                                    <div class="book-info">
+                                        <div class="book-title"><?php echo htmlspecialchars($book['title']); ?></div>
+                                        <div class="book-author"><?php echo htmlspecialchars($book['author_name'] ?? 'N/A'); ?></div>
+                                        <div class="book-meta">
+                                            <div class="meta-item">
+                                                <i data-lucide="calendar" class="w-3 h-3"></i>
+                                                <span>Due: <?php echo htmlspecialchars($book['due_date']); ?></span>
+                                            </div>
                                             <?php if ($book['status'] === 'overdue'): ?>
-                                                <span class="badge bg-[var(--card-pink-light)] text-white">Overdue</span>
-                                                <span class="badge bg-red-600 text-white">Fine: ₱<?php echo number_format($penalty, 2); ?></span>
+                                                <span class="status-badge badge-overdue">Overdue</span>
+                                                <span class="status-badge badge-overdue">Fine: ₱<?php echo number_format($penalty, 2); ?></span>
                                             <?php elseif ($daysUntilDue <= 3 && $daysUntilDue >= 0): ?>
-                                                <span class="badge bg-[var(--card-yellow-light)] text-[var(--dark-charcoal)]">Due Soon</span>
+                                                <span class="status-badge badge-due-soon">Due Soon</span>
                                             <?php else: ?>
-                                                <span class="badge bg-[var(--card-green-light)] text-white">On Time</span>
+                                                <span class="status-badge badge-available">On Time</span>
                                             <?php endif; ?>
                                         </div>
                                     </div>
@@ -241,45 +248,38 @@ function getDaysUntilDue($dueDate) {
                 </div>
             </div>
 
-            <!-- Featured Books -->
-            <div class="card border-0 shadow-lg bg-white/95 backdrop-blur-sm">
-                <div class="card-header bg-gradient-to-r from-[var(--card-blue-light)]/10 to-[var(--card-green-light)]/10 rounded-t-lg">
-                    <div class="card-title text-xl text-[var(--dark-charcoal)] flex items-center">
-                        <i data-lucide="star" class="w-5 h-5 mr-2 text-[var(--card-yellow-light)]"></i>
+            <!-- Featured Books Section -->
+            <div class="section-card">
+                <div class="card-header bg-gradient-to-r">
+                    <div class="card-title text-xl flex items-center">
+                        <i data-lucide="star" class="w-5 h-5 mr-2"></i>
                         Featured Books
                     </div>
-                    <div class="card-description text-[var(--dark-charcoal)]/70">Popular and newly added coastal treasures</div>
+                    <div class="card-description">Popular and newly added coastal treasures</div>
                 </div>
                 <div class="card-content">
                     <div class="space-y-4">
                         <?php foreach ($featured_books as $book): ?>
-                            <?php
-                            $categoryColors = [
-                                'Computer Science' => 'var(--card-orange-light)',
-                                'Engineering' => 'var(--card-blue-light)',
-                                'Physics' => 'var(--card-green-light)'
-                            ];
-                            $categoryColor = $categoryColors[$book['category']] ?? 'var(--primary)';
-                            ?>
-                            <div class="flex items-center space-x-3 p-4 border-0 rounded-xl bg-gradient-to-r from-[var(--card-green-light)]/5 to-[var(--card-pink-light)]/5 cursor-pointer hover:shadow-md transition-all duration-300 hover:scale-[1.02]"
-                                onclick="window.location.href='book_details.php?book_id=<?php echo $book['id']; ?>'">
-                                <div class="w-12 h-16 bg-gradient-to-br from-[var(--card-blue-light)] to-[var(--card-green-light)] rounded-lg flex items-center justify-center shadow-lg">
+                            <div class="book-item cursor-pointer" 
+                                 onclick="window.location.href='book_details.php?book_id=<?php echo $book['id']; ?>'">
+                                <div class="book-cover">
                                     <i data-lucide="book-open" class="w-6 h-6 text-white"></i>
                                 </div>
-                                <div class="flex-1">
-                                    <h4 class="font-medium text-[var(--dark-charcoal)]"><?php echo htmlspecialchars($book['title']); ?></h4>
-                                    <p class="text-sm text-[var(--dark-charcoal)]/70"><?php echo htmlspecialchars($book['author']); ?></p>
-                                    <div class="flex items-center space-x-2 mt-2">
-                                        <i data-lucide="star" class="w-3 h-3 fill-[var(--card-yellow-light)] text-[var(--card-yellow-light)]"></i>
-                                        <span class="text-xs text-[var(--dark-charcoal)]/70"><?php echo htmlspecialchars($book['rating']); ?></span>
-                                        <span class="text-xs text-[var(--dark-charcoal)]/50">•</span>
-                                        <span class="badge" style="background-color: <?php echo $categoryColor; ?>20; color: <?php echo $categoryColor; ?>; border: 1px solid <?php echo $categoryColor; ?>40;">
+                                <div class="book-info">
+                                    <div class="book-title"><?php echo htmlspecialchars($book['title']); ?></div>
+                                    <div class="book-author"><?php echo htmlspecialchars($book['author']); ?></div>
+                                    <div class="book-meta">
+                                        <div class="rating">
+                                            <i data-lucide="star" class="w-3 h-3 fill-current text-warning"></i>
+                                            <span><?php echo htmlspecialchars($book['rating']); ?></span>
+                                        </div>
+                                        <span class="status-badge badge-category">
                                             <?php echo htmlspecialchars($book['category']); ?>
                                         </span>
                                         <?php if ($book['available']): ?>
-                                            <span class="badge bg-[var(--card-green-light)] text-white">Available</span>
+                                            <span class="status-badge badge-available">Available</span>
                                         <?php else: ?>
-                                            <span class="badge bg-[var(--card-pink-light)]/20 text-[var(--card-pink-light)]">Checked Out</span>
+                                            <span class="status-badge badge-checked-out">Checked Out</span>
                                         <?php endif; ?>
                                     </div>
                                 </div>
@@ -291,27 +291,27 @@ function getDaysUntilDue($dueDate) {
         </div>
 
         <!-- Quick Actions -->
-        <div class="card border-0 shadow-lg bg-gradient-to-r from-[var(--card-orange-light)]/5 via-white to-[var(--card-blue-light)]/5">
+        <div class="section-card quick-actions">
             <div class="card-header">
-                <div class="card-title text-xl text-[var(--dark-charcoal)]">⚡ Quick Actions</div>
-                <div class="card-description text-[var(--dark-charcoal)]/70">Common tasks and AI-powered shortcuts</div>
+                <div class="card-title text-xl">⚡ Quick Actions</div>
+                <div class="card-description">Common tasks and AI-powered shortcuts</div>
             </div>
             <div class="card-content">
-                <div class="grid gap-4 md:grid-cols-4">
-                    <a href="books_available.php" class="btn btn-outline justify-start border-[var(--card-orange-light)] text-[var(--card-orange-light)] hover:bg-[var(--card-orange-light)] hover:text-white py-4 rounded-xl shadow-md">
-                        <i data-lucide="search" class="w-4 h-4 mr-2"></i>
+                <div class="action-buttons">
+                    <a href="books_available.php" class="action-btn action-btn-search">
+                        <i data-lucide="search" class="w-4 h-4"></i>
                         Search Books
                     </a>
-                    <button onclick="toggleAIChat()" class="btn btn-outline justify-start border-[var(--card-yellow-light)] text-[var(--card-yellow-light)] hover:bg-[var(--card-yellow-light)] hover:text-[var(--dark-charcoal)] py-4 rounded-xl shadow-md">
-                        <i data-lucide="message-circle" class="w-4 h-4 mr-2"></i>
+                    <button onclick="toggleAIChat()" class="action-btn action-btn-ai">
+                        <i data-lucide="message-circle" class="w-4 h-4"></i>
                         AI Assistant
                     </button>
-                    <a href="my_loans.php" class="btn btn-outline justify-start border-[var(--card-green-light)] text-[var(--card-green-light)] hover:bg-[var(--card-green-light)] hover:text-white py-4 rounded-xl shadow-md">
-                        <i data-lucide="book-marked" class="w-4 h-4 mr-2"></i>
+                    <a href="my_loans.php" class="action-btn action-btn-loans">
+                        <i data-lucide="book-marked" class="w-4 h-4"></i>
                         My Loans
                     </a>
-                    <a href="my_loans.php" class="btn btn-outline justify-start border-[var(--card-blue-light)] text-[var(--card-blue-light)] hover:bg-[var(--card-blue-light)] hover:text-white py-4 rounded-xl shadow-md">
-                        <i data-lucide="clock" class="w-4 h-4 mr-2"></i>
+                    <a href="my_loans.php" class="action-btn action-btn-history">
+                        <i data-lucide="clock" class="w-4 h-4"></i>
                         Loan History
                     </a>
                 </div>
