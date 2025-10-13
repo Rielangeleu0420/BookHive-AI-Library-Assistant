@@ -72,7 +72,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $conn->close();
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -87,33 +86,35 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 </head>
 <body>
     <div class="min-h-screen bg-gradient-to-br from-[var(--background)] via-[var(--muted)] to-[var(--accent)]">
-        <!-- Header -->
-        <header class="header-primary backdrop-blur-sm border-b border-border px-6 py-4">
-            <div class="flex items-center justify-between max-w-7xl mx-auto">
-                <a href="index.php" class="flex items-center space-x-2 text-primary-foreground hover:bg-primary/20 btn">
+        <!-- Header - Updated to match image -->
+        <header class="login-header">
+            <div class="header-content">
+                <a href="index.php" class="back-button">
                     <i data-lucide="arrow-left" class="w-4 h-4"></i>
                     <span>Back to Home</span>
                 </a>
-                <div class="flex items-center space-x-3">
-                    <div class="w-8 h-8 bg-[var(--secondary)] rounded-xl flex items-center justify-center shadow-lg">
-                        <i data-lucide="book-open" class="w-5 h-5 text-white"></i>
+                
+                <div class="logo-section-right">
+                    <div class="logo-icon">
+                        <i data-lucide="book-open" class="w-5 h-5"></i>
                     </div>
-                    <span class="font-semibold text-primary-foreground">BookHive</span>
+                    <span class="logo-text">BookHive</span>
                 </div>
             </div>
         </header>
 
+        <!-- Spacing between header and login box -->
+        <div class="header-spacing"></div>
+
         <!-- Login Form -->
-        <div class="flex items-center justify-center px-4 py-20">
-            <div class="auth-container card">
-                <div class="space-y-1 text-center pb-6">
-                    <div class="w-16 h-16 bg-gradient-to-br from-[var(--primary)] to-[var(--secondary)] rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-lg">
-                        <i data-lucide="book-open" class="w-8 h-8 text-primary-foreground"></i>
+        <div class="login-container">
+            <div class="auth-container">
+                <div class="welcome-section">
+                    <div class="icon-container">
+                        <i data-lucide="book-open" class="w-8 h-8 text-white"></i>
                     </div>
-                    <h2 class="text-3xl text-foreground">Welcome Back</h2>
-                    <p class="text-muted-foreground">
-                        Sign in to access your BookHive account
-                    </p>
+                    <h2>Welcome Back</h2>
+                    <p>Sign in to access your BookHive account</p>
                 </div>
 
                 <?php
@@ -122,48 +123,85 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 }
                 ?>
 
-                <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="post" class="space-y-4">
+                <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="post" class="login-form">
+                    <!-- Role Selection - Dropdown with no default selection -->
                     <div class="form-group">
-                        <label for="role">I am a:</label>
-                        <select name="role" id="role" class="form-control">
+                        <label for="role">I am at:</label>
+                        <select name="role" id="role" class="form-control <?php echo (!empty($login_err)) ? 'is-invalid' : ''; ?>">
                             <option value="">Select role</option>
-                            <option value="student" <?php echo ($role == 'student') ? 'selected' : ''; ?>>Student</option>
-                            <option value="librarian" <?php echo ($role == 'librarian') ? 'selected' : ''; ?>>Librarian</option>
+                            <option value="student" <?php echo (isset($role) && $role == 'student') ? 'selected' : ''; ?>>☞ Student</option>
+                            <option value="librarian" <?php echo (isset($role) && $role == 'librarian') ? 'selected' : ''; ?>>Librarian</option>
                         </select>
+                        <?php if (!empty($login_err)): ?>
+                            <span class="invalid-feedback"><?php echo $login_err; ?></span>
+                        <?php endif; ?>
                     </div>
 
+                    <!-- Email Field - Empty placeholder -->
                     <div class="form-group">
-                        <label for="username">Username</label>
-                        <input type="text" name="username" id="username" class="form-control <?php echo (!empty($username_err)) ? 'is-invalid' : ''; ?>" value="<?php echo $username; ?>" placeholder="Enter your username">
-                        <span class="invalid-feedback"><?php echo $username_err; ?></span>
+                        <label for="username">Email Address</label>
+                        <input type="text" name="username" id="username" class="form-control <?php echo (!empty($username_err)) ? 'is-invalid' : ''; ?>" value="<?php echo isset($username) ? htmlspecialchars($username) : ''; ?>" placeholder=" ">
+                        <?php if (!empty($username_err)): ?>
+                            <span class="invalid-feedback"><?php echo $username_err; ?></span>
+                        <?php endif; ?>
                     </div>
 
+                    <!-- Password Field -->
                     <div class="form-group">
                         <label for="password">Password</label>
                         <input type="password" name="password" id="password" class="form-control <?php echo (!empty($password_err)) ? 'is-invalid' : ''; ?>" placeholder="Enter your password">
-                        <span class="invalid-feedback"><?php echo $password_err; ?></span>
+                        <?php if (!empty($password_err)): ?>
+                            <span class="invalid-feedback"><?php echo $password_err; ?></span>
+                        <?php endif; ?>
                     </div>
 
+                    <!-- Sign In Button -->
                     <div class="form-group">
-                        <input type="submit" class="btn btn-primary w-full py-6 rounded-xl shadow-lg" value="Sign In as <?php echo ($role == 'student' ? 'Student' : ($role == 'librarian' ? 'Librarian' : 'User')); ?>">
+                        <button type="submit" class="btn-login" id="login-button">
+                            Sign in
+                        </button>
                     </div>
 
-                    <div class="flex items-center justify-between text-sm">
-                        <a href="#" class="btn btn-link">Forgot Password?</a>
-                        <a href="signup.php" class="btn btn-link">Create Account</a>
+                    <div class="form-links">
+                        <a href="#" class="btn-link">Forgot Password?</a>
+                        <a href="signup.php" class="btn-link">Create Account</a>
                     </div>
                 </form>
 
                 <!-- Demo Credentials -->
-                <div class="mt-6 p-4 bg-[var(--muted)] rounded-xl border border-[var(--accent)]/20">
-                    <p class="text-sm font-medium mb-2 text-foreground">Demo Credentials:</p>
-                    <div class="text-xs space-y-1 text-muted-foreground">
-                        <p><strong class="text-[var(--secondary)]">Student:</strong> studentuser / password</p>
-                        <p><strong class="text-[var(--primary)]">Librarian:</strong> librarianuser / password</p>
+                <div class="demo-credentials">
+                    <p class="title">Demo Credentials:</p>
+                    <div class="credentials-list">
+                        <div class="credential-item">
+                            <span class="credential-line">
+                                <strong class="student">Student:</strong>
+                                <span class="credential-details">student@school.edu / password</span>
+                            </span>
+                        </div>
+                        <div class="credential-item">
+                            <span class="credential-line">
+                                <strong class="librarian">Librarian:</strong>
+                                <span class="credential-details">librarian@school.edu / password</span>
+                            </span>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
+    <script>
+        // Update button text when role changes
+        document.getElementById('role').addEventListener('change', function() {
+            const button = document.getElementById('login-button');
+            if (this.value === 'student') {
+                button.textContent = 'Sign in as Student';
+            } else if (this.value === 'librarian') {
+                button.textContent = 'Sign in as Librarian';
+            } else {
+                button.textContent = 'Sign in';
+            }
+        });
+    </script>
 </body>
 </html>
