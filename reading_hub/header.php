@@ -28,29 +28,74 @@ $showAIChat = isset($_GET['show_ai_chat']) && $_GET['show_ai_chat'] === 'true';
     </script>
 </head>
 <body>
-    <div class="top-nav">
-        <img src="logo.png" alt="Logo" class="logo">
-        <div class="title-container">BookHive Inventory Management System</div>
-        <div class="user-info">
-            <span>Welcome, <?php echo htmlspecialchars($full_name); ?> (<?php echo ucfirst($current_role); ?>)</span>
-            <a href="logout.php" class="logout-btn">Logout</a>
+    <!-- Main Header -->
+    <header class="main-header">
+        <div class="header-container">
+            <!-- Logo Section -->
+            <div class="logo-section">
+                <div class="logo-icon">
+                    <i data-lucide="book-open" class="logo-book-icon"></i>
+                </div>
+                <div class="logo-text">
+                    <span class="logo-primary">Book</span>
+                    <span class="logo-secondary">Hive</span>
+                </div>
+            </div>
+
+            <!-- Page Title -->
+            <div class="page-title">
+                <?php echo ucfirst($current_role); ?> Dashboard
+            </div>
+
+            <!-- User Info Section -->
+            <div class="user-section">
+                <div class="user-info">
+                    <span class="user-welcome">Welcome, <?php echo htmlspecialchars(explode(' ', $full_name)[0]); ?></span>
+                    <div class="user-role-badge">
+                        <?php echo ucfirst($current_role); ?>
+                    </div>
+                </div>
+                <a href="logout.php" class="logout-btn">
+                    <i data-lucide="log-out" class="logout-icon"></i>
+                    Logout
+                </a>
+            </div>
         </div>
-    </div>
+    </header>
 
-    <div class="nav-bar">
-        <a href="books_available.php" class="<?php echo (basename($_SERVER['PHP_SELF']) == 'books_available.php') ? 'active' : ''; ?>">Books Available</a>
-        <?php if ($current_role === 'librarian'): ?>
-            <a href="add_book.php" class="<?php echo (basename($_SERVER['PHP_SELF']) == 'add_book.php') ? 'active' : ''; ?>">Add Books</a>
-            <a href="borrowed_books_librarian.php" class="<?php echo (basename($_SERVER['PHP_SELF']) == 'borrowed_books_librarian.php') ? 'active' : ''; ?>">Manage Borrowed</a>
-            <a href="user_management.php" class="<?php echo (basename($_SERVER['PHP_SELF']) == 'user_management.php') ? 'active' : ''; ?>">User Management</a>
-            <!-- Add more librarian links here -->
-        <?php else: // student ?>
-            <a href="borrow_book.php" class="<?php echo (basename($_SERVER['PHP_SELF']) == 'borrow_book.php') ? 'active' : ''; ?>">Borrow a Book</a>
-            <a href="my_loans.php" class="<?php echo (basename($_SERVER['PHP_SELF']) == 'my_loans.php') ? 'active' : ''; ?>">My Loans</a>
-            <!-- Add more student links here -->
-        <?php endif; ?>
-        <a href="about.php" class="<?php echo (basename($_SERVER['PHP_SELF']) == 'about.php') ? 'active' : ''; ?>">About</a>
-    </div>
-
-    <div class="main-content">
-        <!-- Content will be inserted here -->
+    <!-- Navigation Bar -->
+    <nav class="main-nav">
+        <div class="nav-container">
+            <a href="books_available.php" class="nav-link <?php echo (basename($_SERVER['PHP_SELF']) == 'books_available.php') ? 'active' : ''; ?>">
+                <i data-lucide="search" class="nav-icon"></i>
+                Books Available
+            </a>
+            <?php if ($current_role === 'librarian'): ?>
+                <a href="add_book.php" class="nav-link <?php echo (basename($_SERVER['PHP_SELF']) == 'add_book.php') ? 'active' : ''; ?>">
+                    <i data-lucide="plus-circle" class="nav-icon"></i>
+                    Add Books
+                </a>
+                <a href="borrowed_books_librarian.php" class="nav-link <?php echo (basename($_SERVER['PHP_SELF']) == 'borrowed_books_librarian.php') ? 'active' : ''; ?>">
+                    <i data-lucide="book-check" class="nav-icon"></i>
+                    Manage Borrowed
+                </a>
+                <a href="user_management.php" class="nav-link <?php echo (basename($_SERVER['PHP_SELF']) == 'user_management.php') ? 'active' : ''; ?>">
+                    <i data-lucide="users" class="nav-icon"></i>
+                    User Management
+                </a>
+            <?php else: // student ?>
+                <a href="borrow_book.php" class="nav-link <?php echo (basename($_SERVER['PHP_SELF']) == 'borrow_book.php') ? 'active' : ''; ?>">
+                    <i data-lucide="book-up" class="nav-icon"></i>
+                    Borrow a Book
+                </a>
+                <a href="my_loans.php" class="nav-link <?php echo (basename($_SERVER['PHP_SELF']) == 'my_loans.php') ? 'active' : ''; ?>">
+                    <i data-lucide="book-marked" class="nav-icon"></i>
+                    My Loans
+                </a>
+            <?php endif; ?>
+            <a href="about.php" class="nav-link <?php echo (basename($_SERVER['PHP_SELF']) == 'about.php') ? 'active' : ''; ?>">
+                <i data-lucide="info" class="nav-icon"></i>
+                About
+            </a>
+        </div>
+    </nav>
