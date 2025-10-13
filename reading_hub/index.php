@@ -91,9 +91,9 @@ if (isLoggedIn()) {
                     ?>
                         <div class="card text-center border-0 shadow-lg hover:shadow-xl transition-all duration-300 <?php echo $bgColors[$index % 4]; ?> backdrop-blur-sm">
                             <div class="card-content pt-8 pb-6">
-                                <div class="w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center" style="background-color: <?php echo $colors[$index % 4]; ?>">
-                                    <i data-lucide="<?php echo $stat['icon']; ?>" class="w-8 h-8 text-white"></i>
-                                </div>
+                                <div class="w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center" style="background: #BD1B19 !important;">
+									<i data-lucide="<?php echo $stat['icon']; ?>" class="w-8 h-8 text-white"></i>
+								</div>
                                 <div class="text-3xl font-bold mb-2 text-foreground"><?php echo $stat['value']; ?></div>
                                 <p class="text-foreground/70 font-medium"><?php echo $stat['label']; ?></p>
                             </div>
