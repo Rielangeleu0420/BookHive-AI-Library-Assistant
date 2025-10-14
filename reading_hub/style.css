@@ -1743,15 +1743,14 @@ a:focus {
     color: var(--secondary);
 }
 
-/* Page Title */
 .page-title {
-    font-size: 20px;
-    font-weight: 600;
+    font-size: 1.6rem;
+    font-weight: 700;
     color: white;
-    text-align: center;
-    flex: 1;
-    margin: 0 24px;
+    letter-spacing: 0.5px;
+    text-transform: none;
 }
+
 
 /* User Section */
 .user-section {
@@ -2251,5 +2250,45 @@ a:focus {
 .chat-btn:hover {
   background-color: #ffa726;
   transform: scale(1.05);
+}
+
+
+/* ===== Back button in student dashboard ===== */
+
+/* === Back to Home Button Styles === */
+/* === Back to Home Button (Glass Theme Matching Logout) === */
+.back-home-container {
+    position: absolute;
+    top: 18px;
+    left: 20px;
+    z-index: 1000;
+}
+
+.back-home-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: rgba(255, 255, 255, 0.15);
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+}
+
+.back-home-btn:hover {
+    background: rgba(255, 255, 255, 0.25);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    color: #F2C261; /* subtle golden accent on hover */
+}
+
+.back-home-btn i {
+    width: 16px;
+    height: 16px;
 }
 
