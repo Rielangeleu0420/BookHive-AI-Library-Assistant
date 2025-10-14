@@ -30,6 +30,16 @@ $showAIChat = isset($_GET['show_ai_chat']) && $_GET['show_ai_chat'] === 'true';
 <body>
     <!-- Main Header -->
     <header class="main-header">
+        <?php if ($current_role === 'student'): ?>
+    <!-- Back to Home button (Top-left) -->
+    <div class="back-home-container">
+        <a href="student_dashboard.php" class="back-home-btn">
+            <i data-lucide="arrow-left"></i>
+            Back to Home
+        </a>
+    </div>
+<?php endif; ?>
+
         <div class="header-container">
             <!-- Logo Section -->
             <div class="logo-section">
