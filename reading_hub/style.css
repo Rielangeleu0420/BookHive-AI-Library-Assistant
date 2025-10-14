@@ -1960,3 +1960,296 @@ a:focus {
     -ms-overflow-style: none;
     scrollbar-width: none;
 }
+
+/* ===== BOOKS AVAILABLE PAGE STYLES ===== */
+
+.table-container {
+    width: 90%;
+    max-width: 1000px;
+    margin: 40px auto;
+    background-color: #fff;
+    padding: 20px 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.table-container h2 {
+    color: #b22222; /* same tone as your header */
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.table-container table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 16px;
+}
+
+.table-container th, 
+.table-container td {
+    padding: 12px 15px;
+    border-bottom: 1px solid #ddd;
+    text-align: left;
+}
+
+.table-container th {
+    background-color: #f8f4ef;
+    color: #333;
+    font-weight: bold;
+}
+
+.table-container tr:hover {
+    background-color: #f3e7da;
+}
+
+.table-container td {
+    color: #333;
+}
+
+@media (max-width: 768px) {
+    .table-container table, 
+    .table-container thead, 
+    .table-container tbody, 
+    .table-container th, 
+    .table-container td, 
+    .table-container tr {
+        display: block;
+    }
+    .table-container tr {
+        margin-bottom: 15px;
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .table-container td {
+        padding: 10px;
+        border: none;
+        display: flex;
+        justify-content: space-between;
+    }
+    .table-container td::before {
+        content: attr(data-label);
+        font-weight: bold;
+    }
+}
+
+/* ===== AI BUTTON ===== */
+
+.chat-button-container {
+  text-align: center;
+  margin: 30px 0 50px;
+}
+
+.chat-btn {
+  display: inline-block;
+  background-color: #b22222;
+  color: #fff;
+  font-weight: bold;
+  padding: 12px 28px;
+  border: none;
+  border-radius: 30px;
+  text-decoration: none;
+  font-size: 16px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+  transition: all 0.3s ease;
+}
+
+.chat-btn:hover {
+  background-color: #a11d1d;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+}
+
+/* ===== FOOTER STYLES ===== */
+.footer {
+  background-color: #b22222;        /* your signature deep red */
+  color: #f8f4ef;                   /* soft cream text */
+  text-align: center;
+  padding: 18px 0;
+  font-size: 15px;
+  margin-top: 40px;
+  border-top: 4px solid #a11d1d;    /* subtle accent line */
+  box-shadow: 0 -2px 6px rgba(0,0,0,0.1);
+}
+
+.footer p {
+  margin: 0;
+  letter-spacing: 0.3px;
+}
+
+.footer strong {
+  color: #fff;
+}
+
+.footer p::before {
+  content: "💡 ";
+}
+
+.footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background-color: #b22222;
+  color: #f8f4ef;
+  text-align: center;
+  padding: 10px 0;
+  font-size: 14px;
+  z-index: 999;
+}
+
+/* ===== Books Page Styles ===== */
+.books-page {
+  background-color: #f5f0e6;
+  padding: 40px;
+  border-radius: 12px;
+  min-height: 100vh;
+}
+
+.search-filter-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 30px;
+}
+
+.search-filter-container input {
+  width: 80%;
+  padding: 10px 15px;
+  border: 1px solid #ccc;
+  border-radius: 25px;
+  outline: none;
+  font-size: 16px;
+}
+
+.filter-dropdowns {
+  display: flex;
+  gap: 10px;
+}
+
+.filter-dropdowns select {
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+}
+
+.section-title {
+  font-size: 1.6rem;
+  margin-bottom: 20px;
+  text-align: center;
+  color: #3b3b3b;
+}
+
+.books-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 20px;
+}
+
+.book-card {
+  background: #fff9f2;
+  border-radius: 15px;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+  padding: 20px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.book-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 5px 12px rgba(0,0,0,0.15);
+}
+
+.book-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.book-header h3 {
+  font-size: 1.1rem;
+  color: #333;
+}
+
+.availability {
+  font-size: 0.8rem;
+  border-radius: 12px;
+  padding: 3px 8px;
+}
+
+.available {
+  background-color: #c4f2c1;
+  color: #1b6b1b;
+}
+
+.unavailable {
+  background-color: #f6c2c2;
+  color: #8b0000;
+}
+
+.author {
+  font-size: 0.9rem;
+  color: #555;
+  margin-bottom: 8px;
+}
+
+.book-cover {
+  background: #f8f3e7;
+  border-radius: 10px;
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40px;
+  color: #d26c00;
+  margin: 10px 0;
+}
+
+.desc {
+  font-size: 0.85rem;
+  color: #555;
+  margin-bottom: 10px;
+}
+
+.book-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.genre-tag {
+  background-color: #fceacc;
+  color: #b15b00;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+}
+
+.illustrator {
+  font-size: 0.8rem;
+  color: #888;
+}
+
+/* Chat button */
+.chat-button-container {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+}
+
+.chat-btn {
+  background-color: #ffb74d;
+  color: #fff;
+  padding: 12px 20px;
+  border-radius: 25px;
+  font-weight: bold;
+  text-decoration: none;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+  transition: all 0.2s ease-in-out;
+}
+
+.chat-btn:hover {
+  background-color: #ffa726;
+  transform: scale(1.05);
+}
+
