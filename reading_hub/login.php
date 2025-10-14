@@ -126,7 +126,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="post" class="login-form">
                     <!-- Role Selection - Dropdown with no default selection -->
                     <div class="form-group">
-                        <label for="role">I am at:</label>
+                        <label for="role">I am a:</label>
                         <select name="role" id="role" class="form-control <?php echo (!empty($login_err)) ? 'is-invalid' : ''; ?>">
                             <option value="">Select role</option>
                             <option value="student" <?php echo (isset($role) && $role == 'student') ? 'selected' : ''; ?>>☞ Student</option>
@@ -139,7 +139,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
                     <!-- Email Field - Empty placeholder -->
                     <div class="form-group">
-                        <label for="username">Email Address</label>
+                        <label for="username">Username</label>
                         <input type="text" name="username" id="username" class="form-control <?php echo (!empty($username_err)) ? 'is-invalid' : ''; ?>" value="<?php echo isset($username) ? htmlspecialchars($username) : ''; ?>" placeholder=" ">
                         <?php if (!empty($username_err)): ?>
                             <span class="invalid-feedback"><?php echo $username_err; ?></span>
