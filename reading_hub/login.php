@@ -32,44 +32,65 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     // Validate credentials
     if (empty($username_err) && empty($password_err) && empty($login_err)) {
-        $sql = "SELECT user_id, username, password_hash, role, full_name FROM users WHERE username = ? AND role = ?";
+        
+        // Hardcoded librarian credentials
+        $hardcoded_librarian_username = "admin";
+        $hardcoded_librarian_password = "admin123";
+        
+        // Check if it's the hardcoded librarian
+        if ($role === 'librarian' && $username === $hardcoded_librarian_username && $password === $hardcoded_librarian_password) {
+            // Hardcoded librarian login successful
+            $_SESSION["loggedin"] = true;
+            $_SESSION["user_id"] = 0; // Special ID for hardcoded admin
+            $_SESSION["username"] = $hardcoded_librarian_username;
+            $_SESSION["role"] = 'librarian';
+            $_SESSION["full_name"] = 'System Librarian';
 
-        if ($stmt = $conn->prepare($sql)) {
-            $stmt->bind_param("ss", $param_username, $param_role);
-            $param_username = $username;
-            $param_role = $role;
+            logAudit(0, 'login', 0, 'Hardcoded librarian logged in successfully.');
+            redirectToDashboard();
+        }
+        else {
+            // Regular database authentication for other users
+            $sql = "SELECT user_id, username, password_hash, role, full_name FROM users WHERE username = ? AND role = ?";
 
-            if ($stmt->execute()) {
-                $stmt->store_result();
+            if ($stmt = $conn->prepare($sql)) {
+                $stmt->bind_param("ss", $param_username, $param_role);
+                $param_username = $username;
+                $param_role = $role;
 
-                if ($stmt->num_rows == 1) {
-                    $stmt->bind_result($user_id, $username, $hashed_password, $user_role, $full_name);
-                    if ($stmt->fetch()) {
-                        if (password_verify($password, $hashed_password)) {
-                            // Password is correct, start a new session
-                            $_SESSION["loggedin"] = true;
-                            $_SESSION["user_id"] = $user_id;
-                            $_SESSION["username"] = $username;
-                            $_SESSION["role"] = $user_role;
-                            $_SESSION["full_name"] = $full_name; // Store full name
+                if ($stmt->execute()) {
+                    $stmt->store_result();
 
-                            logAudit($user_id, 'login', $user_id, 'User logged in successfully.');
+                    if ($stmt->num_rows == 1) {
+                        $stmt->bind_result($user_id, $username, $hashed_password, $user_role, $full_name);
+                        if ($stmt->fetch()) {
+                            if (password_verify($password, $hashed_password)) {
+                                // Password is correct, start a new session
+                                $_SESSION["loggedin"] = true;
+                                $_SESSION["user_id"] = $user_id;
+                                $_SESSION["username"] = $username;
+                                $_SESSION["role"] = $user_role;
+                                $_SESSION["full_name"] = $full_name;
 
-                            redirectToDashboard();
-                        } else {
-                            $login_err = "Invalid username, password, or role.";
+                                logAudit($user_id, 'login', $user_id, 'User logged in successfully.');
+                                redirectToDashboard();
+                            } else {
+                                $login_err = "Invalid username, password, or role.";
+                            }
                         }
+                    } else {
+                        $login_err = "Invalid username, password, or role.";
                     }
                 } else {
-                    $login_err = "Invalid username, password, or role.";
+                    echo "Oops! Something went wrong. Please try again later.";
                 }
-            } else {
-                echo "Oops! Something went wrong. Please try again later.";
+                $stmt->close();
             }
-            $stmt->close();
         }
     }
-    $conn->close();
+    if (isset($conn)) {
+        $conn->close();
+    }
 }
 ?>
 <!DOCTYPE html>
@@ -129,7 +150,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         <label for="role">I am a:</label>
                         <select name="role" id="role" class="form-control <?php echo (!empty($login_err)) ? 'is-invalid' : ''; ?>">
                             <option value="">Select role</option>
-                            <option value="student" <?php echo (isset($role) && $role == 'student') ? 'selected' : ''; ?>>☞ Student</option>
+                            <option value="student" <?php echo (isset($role) && $role == 'student') ? 'selected' : ''; ?>>Student</option>
                             <option value="librarian" <?php echo (isset($role) && $role == 'librarian') ? 'selected' : ''; ?>>Librarian</option>
                         </select>
                         <?php if (!empty($login_err)): ?>
@@ -181,7 +202,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         <div class="credential-item">
                             <span class="credential-line">
                                 <strong class="librarian">Librarian:</strong>
-                                <span class="credential-details">librarian@school.edu / password</span>
+                                <span class="credential-details">username / password</span>
                             </span>
                         </div>
                     </div>
