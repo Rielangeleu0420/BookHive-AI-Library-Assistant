@@ -30,6 +30,16 @@ $showAIChat = isset($_GET['show_ai_chat']) && $_GET['show_ai_chat'] === 'true';
 <body>
     <!-- Main Header -->
     <header class="main-header">
+        <?php if ($current_role === 'student'): ?>
+    <!-- Back to Home button (Top-left) -->
+    <div class="back-home-container">
+        <a href="student_dashboard.php" class="back-home-btn">
+            <i data-lucide="arrow-left"></i>
+            Back to Home
+        </a>
+    </div>
+<?php endif; ?>
+
         <div class="header-container">
             <!-- Logo Section -->
             <div class="logo-section">
@@ -82,6 +92,10 @@ $showAIChat = isset($_GET['show_ai_chat']) && $_GET['show_ai_chat'] === 'true';
                 <a href="user_management.php" class="nav-link <?php echo (basename($_SERVER['PHP_SELF']) == 'user_management.php') ? 'active' : ''; ?>">
                     <i data-lucide="users" class="nav-icon"></i>
                     User Management
+                </a>
+				<a href="reports.php" class="nav-link <?php echo (basename($_SERVER['PHP_SELF']) == 'reports.php') ? 'active' : ''; ?>">
+                    <i data-lucide="bar-chart-3" class="nav-icon"></i>
+                    Reports
                 </a>
             <?php else: // student ?>
                 <a href="borrow_book.php" class="nav-link <?php echo (basename($_SERVER['PHP_SELF']) == 'borrow_book.php') ? 'active' : ''; ?>">
