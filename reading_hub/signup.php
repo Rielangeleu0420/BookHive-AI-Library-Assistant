@@ -1,4 +1,8 @@
 <?php
+// Temporary debugging (remove in production)
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
 require_once 'functions.php';
 
 if (isLoggedIn()) {
@@ -7,28 +11,35 @@ if (isLoggedIn()) {
 
 $username = $email = $lrn = $full_name = $year_level = $password = $confirm_password = "";
 $username_err = $email_err = $lrn_err = $full_name_err = $year_level_err = $password_err = $confirm_password_err = "";
+$signup_err = $success_msg = "";
+
+// Set role to 'student' by default
+$role = 'student';
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    // Role is always 'student' for public signup
+    $role = 'student';
+
     // Validate username
     if (empty(trim($_POST["username"]))) {
         $username_err = "Please enter a username.";
+    } elseif (!preg_match('/^[a-zA-Z0-9_]+$/', trim($_POST["username"]))) {
+        $username_err = "Username can only contain letters, numbers, and underscores.";
     } else {
-        // Prepare a select statement
+        $param_username = trim($_POST["username"]);
         $sql = "SELECT user_id FROM users WHERE username = ?";
         if ($stmt = $conn->prepare($sql)) {
             $stmt->bind_param("s", $param_username);
-            $param_username = trim($_POST["username"]);
-            if ($stmt->execute()) {
-                $stmt->store_result();
-                if ($stmt->num_rows == 1) {
-                    $username_err = "This username is already taken.";
-                } else {
-                    $username = trim($_POST["username"]);
-                }
+            $stmt->execute();
+            $stmt->store_result();
+            if ($stmt->num_rows == 1) {
+                $username_err = "This username is already taken.";
             } else {
-                echo "Oops! Something went wrong. Please try again later.";
+                $username = $param_username;
             }
             $stmt->close();
+        } else {
+            $signup_err = "Database error (username check): " . $conn->error;
         }
     }
 
@@ -38,113 +49,114 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     } elseif (!filter_var(trim($_POST["email"]), FILTER_VALIDATE_EMAIL)) {
         $email_err = "Invalid email format.";
     } else {
+        $param_email = trim($_POST["email"]);
         $sql = "SELECT user_id FROM users WHERE email = ?";
         if ($stmt = $conn->prepare($sql)) {
             $stmt->bind_param("s", $param_email);
-            $param_email = trim($_POST["email"]);
-            if ($stmt->execute()) {
-                $stmt->store_result();
-                if ($stmt->num_rows == 1) {
-                    $email_err = "This email is already registered.";
-                } else {
-                    $email = trim($_POST["email"]);
-                }
+            $stmt->execute();
+            $stmt->store_result();
+            if ($stmt->num_rows == 1) {
+                $email_err = "This email is already registered.";
+            } else {
+                $email = $param_email;
             }
             $stmt->close();
-        }
-    }
-
-    // Determine role
-    $role = isset($_POST["role"]) && $_POST["role"] === 'librarian' ? 'librarian' : 'student';
-
-    // Validate LRN (for students only)
-    if ($role === 'student') {
-        if (empty(trim($_POST["lrn"]))) {
-            $lrn_err = "Please enter your LRN.";
-        } elseif (!preg_match('/^\d{12}$/', trim($_POST["lrn"]))) {
-            $lrn_err = "LRN must be 12 digits.";
         } else {
-            $sql = "SELECT user_id FROM users WHERE lrn = ?";
-            if ($stmt = $conn->prepare($sql)) {
-                $stmt->bind_param("s", $param_lrn);
-                $param_lrn = trim($_POST["lrn"]);
-                if ($stmt->execute()) {
-                    $stmt->store_result();
-                    if ($stmt->num_rows == 1) {
-                        $lrn_err = "This LRN is already registered.";
-                    } else {
-                        $lrn = trim($_POST["lrn"]);
-                    }
-                }
-                $stmt->close();
-            }
+            $signup_err = "Database error (email check): " . $conn->error;
         }
     }
 
-    // Validate Full Name
+    // Validate full name
     if (empty(trim($_POST["full_name"]))) {
         $full_name_err = "Please enter your full name.";
     } else {
         $full_name = trim($_POST["full_name"]);
     }
 
-    // Validate Year Level (for students only)
-    if ($role === 'student') {
-        if (empty(trim($_POST["year_level"]))) {
-            $year_level_err = "Please enter your year level.";
+    // Student validations (required for all signups now)
+    if (empty(trim($_POST["lrn"]))) {
+        $lrn_err = "Please enter your LRN.";
+    } elseif (!preg_match('/^\d{12}$/', trim($_POST["lrn"]))) {
+        $lrn_err = "LRN must be exactly 12 digits.";
+    } else {
+        $param_lrn = trim($_POST["lrn"]);
+        $sql = "SELECT user_id FROM users WHERE lrn = ?";
+        if ($stmt = $conn->prepare($sql)) {
+            $stmt->bind_param("s", $param_lrn);
+            $stmt->execute();
+            $stmt->store_result();
+            if ($stmt->num_rows == 1) {
+                $lrn_err = "This LRN is already registered.";
+            } else {
+                $lrn = $param_lrn;
+            }
+            $stmt->close();
         } else {
-            $year_level = trim($_POST["year_level"]);
+            $signup_err = "Database error (LRN check): " . $conn->error;
         }
+    }
+
+    // Validate year level
+    if (empty(trim($_POST["year_level"]))) {
+        $year_level_err = "Please enter your year level (e.g., Grade 12).";
+    } else {
+        $year_level = trim($_POST["year_level"]);
     }
 
     // Validate password
     if (empty(trim($_POST["password"]))) {
         $password_err = "Please enter a password.";
-    } elseif (strlen(trim($_POST["password"])) < 6) {
-        $password_err = "Password must have at least 6 characters.";
+    } elseif (strlen(trim($_POST["password"])) < 8) {
+        $password_err = "Password must have at least 8 characters.";
     } else {
         $password = trim($_POST["password"]);
     }
 
     // Validate confirm password
     if (empty(trim($_POST["confirm_password"]))) {
-        $confirm_password_err = "Please confirm password.";
+        $confirm_password_err = "Please confirm your password.";
     } else {
         $confirm_password = trim($_POST["confirm_password"]);
-        if (empty($password_err) && ($password != $confirm_password)) {
-            $confirm_password_err = "Password did not match.";
+        if (empty($password_err) && ($password !== $confirm_password)) {
+            $confirm_password_err = "Passwords do not match.";
         }
     }
 
-    // Check input errors before inserting in database
-    if (empty($username_err) && empty($email_err) && empty($lrn_err) && empty($full_name_err) && empty($year_level_err) && empty($password_err) && empty($confirm_password_err)) {
-        // Prepare an insert statement
-        $sql = "INSERT INTO users (username, password_hash, email, role, lrn, full_name, year_level) VALUES (?, ?, ?, ?, ?, ?, ?)";
+    // If no errors, insert into database as student
+    if (empty($username_err) && empty($email_err) && empty($full_name_err) && empty($lrn_err) && empty($year_level_err) && empty($password_err) && empty($confirm_password_err) && empty($signup_err)) {
+        $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
+        // Full INSERT for students
+        $sql = "INSERT INTO users (username, password_hash, email, role, lrn, full_name, year_level) VALUES (?, ?, ?, ?, ?, ?, ?)";
         if ($stmt = $conn->prepare($sql)) {
             $stmt->bind_param("sssssss", $param_username, $param_password, $param_email, $param_role, $param_lrn, $param_full_name, $param_year_level);
-
-            // Set parameters
             $param_username = $username;
-            $param_password = password_hash($password, PASSWORD_DEFAULT); // Creates a password hash
+            $param_password = $hashed_password;
             $param_email = $email;
             $param_role = $role;
-            $param_lrn = ($role === 'student') ? $lrn : NULL;
+            $param_lrn = $lrn;
             $param_full_name = $full_name;
-            $param_year_level = ($role === 'student') ? $year_level : NULL;
+            $param_year_level = $year_level;
 
-            // Attempt to execute the prepared statement
             if ($stmt->execute()) {
-                // Redirect to login page
-                logAudit($conn->insert_id, 'signup', $conn->insert_id, 'New user signed up.');
-                header("location: login.php");
+                $new_user_id = $conn->insert_id;
+                if (function_exists('logAudit')) {
+                    logAudit($new_user_id, 'signup', $new_user_id, "New student account created: $username");
+                }
+                $success_msg = "Student account created successfully! Redirecting to login...";
+                echo "<script>setTimeout(function(){ window.location.href = 'login.php'; }, 2000);</script>";
             } else {
-                echo "Something went wrong. Please try again later.";
+                $signup_err = "Registration failed: " . $stmt->error;
             }
             $stmt->close();
+        } else {
+            $signup_err = "Database error: " . $conn->error;
         }
     }
-    $conn->close();
+    // Close connection after all operations
+    if (isset($conn)) {
+        $conn->close();
+    }
 }
 ?>
 
@@ -153,28 +165,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign Up - BookHive</title>
+    <title>Student Sign Up - BookHive</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://unpkg.com/lucide@latest"></script>
     <script>
         lucide.createIcons();
-    </script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const roleSelect = document.getElementById('role');
-            const studentFields = document.getElementById('student-fields');
-
-            function toggleStudentFields() {
-                if (roleSelect.value === 'student') {
-                    studentFields.style.display = 'block';
-                } else {
-                    studentFields.style.display = 'none';
-                }
-            }
-
-            roleSelect.addEventListener('change', toggleStudentFields);
-            toggleStudentFields(); // Call on load to set initial state
-        });
     </script>
 </head>
 <body>
@@ -199,56 +194,76 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <div class="auth-container card">
                 <div class="space-y-1 text-center pb-6">
                     <div class="w-16 h-16 bg-gradient-to-br from-[var(--primary)] to-[var(--secondary)] rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-lg">
-                        <i data-lucide="book-open" class="w-8 h-8 text-primary-foreground"></i>
+                        <i data-lucide="user-plus" class="w-8 h-8 text-primary-foreground"></i>
                     </div>
-                    <h2 class="text-3xl text-foreground">Sign Up for BookHive</h2>
+                    <h2 class="text-3xl text-foreground">Student Sign Up</h2>
                     <p class="text-muted-foreground">
-                        Please fill this form to create an account.
+                        Create your student account to access the library
                     </p>
                 </div>
-                <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="post" class="space-y-4">
+
+                <!-- Success/Error Messages -->
+                <?php if (!empty($success_msg)): ?>
+                    <div class="alert alert-success text-center mb-4"><?php echo $success_msg; ?></div>
+                <?php endif; ?>
+                <?php if (!empty($signup_err)): ?>
+                    <div class="alert alert-danger text-center mb-4"><?php echo $signup_err; ?></div>
+                <?php endif; ?>
+
+                <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="post" class="space-y-4" novalidate>
+                    <!-- Full Name -->
                     <div class="form-group">
-                        <label>Role</label>
-                        <select name="role" id="role" class="form-control">
-                            <option value="student" <?php echo (isset($_POST['role']) && $_POST['role'] == 'student') ? 'selected' : ''; ?>>Student</option>
-                            <option value="librarian" <?php echo (isset($_POST['role']) && $_POST['role'] == 'librarian') ? 'selected' : ''; ?>>Librarian</option>
-                        </select>
+                        <label for="full_name">Full Name <span class="text-destructive">*</span></label>
+                        <input type="text" name="full_name" id="full_name" class="form-control <?php echo (!empty($full_name_err)) ? 'is-invalid' : ''; ?>" value="<?php echo htmlspecialchars($full_name); ?>" placeholder="Enter your full name (e.g., John Doe)" required>
+                        <span class="invalid-feedback"><?php echo $full_name_err; ?></span>
                     </div>
+
+                    <!-- Username -->
                     <div class="form-group">
-                        <label>Username</label>
-                        <input type="text" name="username" class="form-control <?php echo (!empty($username_err)) ? 'is-invalid' : ''; ?>" value="<?php echo $username; ?>">
+                        <label for="username">Username <span class="text-destructive">*</span></label>
+                        <input type="text" name="username" id="username" class="form-control <?php echo (!empty($username_err)) ? 'is-invalid' : ''; ?>" value="<?php echo htmlspecialchars($username); ?>" placeholder="Enter a unique username" required>
                         <span class="invalid-feedback"><?php echo $username_err; ?></span>
                     </div>
+
+                    <!-- Email -->
                     <div class="form-group">
-                        <label>Email</label>
-                        <input type="email" name="email" class="form-control <?php echo (!empty($email_err)) ? 'is-invalid' : ''; ?>" value="<?php echo $email; ?>">
+                        <label for="email">Email <span class="text-destructive">*</span></label>
+                        <input type="email" name="email" id="email" class="form-control <?php echo (!empty($email_err)) ? 'is-invalid' : ''; ?>" value="<?php echo htmlspecialchars($email); ?>" placeholder="Enter your email address" required>
                         <span class="invalid-feedback"><?php echo $email_err; ?></span>
                     </div>
-                    <div class="form-group" id="student-fields">
-                        <label>LRN (Learning Reference Number)</label>
-                        <input type="text" name="lrn" class="form-control <?php echo (!empty($lrn_err)) ? 'is-invalid' : ''; ?>" value="<?php echo $lrn; ?>" maxlength="12">
+
+                    <!-- Student Fields -->
+                    <div class="form-group">
+                        <label for="lrn">LRN (Learner Reference Number) <span class="text-destructive">*</span></label>
+                        <input type="text" name="lrn" id="lrn" class="form-control <?php echo (!empty($lrn_err)) ? 'is-invalid' : ''; ?>" value="<?php echo htmlspecialchars($lrn); ?>" placeholder="Enter 12-digit LRN" maxlength="12" pattern="\d{12}" title="LRN must be exactly 12 digits" required>
                         <span class="invalid-feedback"><?php echo $lrn_err; ?></span>
-                        <label>Full Name</label>
-                        <input type="text" name="full_name" class="form-control <?php echo (!empty($full_name_err)) ? 'is-invalid' : ''; ?>" value="<?php echo $full_name; ?>">
-                        <span class="invalid-feedback"><?php echo $full_name_err; ?></span>
-                        <label>Year Level</label>
-                        <input type="text" name="year_level" class="form-control <?php echo (!empty($year_level_err)) ? 'is-invalid' : ''; ?>" value="<?php echo $year_level; ?>">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="year_level">Year Level <span class="text-destructive">*</span></label>
+                        <input type="text" name="year_level" id="year_level" class="form-control <?php echo (!empty($year_level_err)) ? 'is-invalid' : ''; ?>" value="<?php echo htmlspecialchars($year_level); ?>" placeholder="e.g., Grade 12 or Year 4" required>
                         <span class="invalid-feedback"><?php echo $year_level_err; ?></span>
                     </div>
+
+                    <!-- Password -->
                     <div class="form-group">
-                        <label>Password</label>
-                        <input type="password" name="password" class="form-control <?php echo (!empty($password_err)) ? 'is-invalid' : ''; ?>" value="<?php echo $password; ?>">
+                        <label for="password">Password <span class="text-destructive">*</span></label>
+                        <input type="password" name="password" id="password" class="form-control <?php echo (!empty($password_err)) ? 'is-invalid' : ''; ?>" placeholder="Enter a password (min 8 characters)" minlength="8" required>
                         <span class="invalid-feedback"><?php echo $password_err; ?></span>
                     </div>
+
+                    <!-- Confirm Password -->
                     <div class="form-group">
-                        <label>Confirm Password</label>
-                        <input type="password" name="confirm_password" class="form-control <?php echo (!empty($confirm_password_err)) ? 'is-invalid' : ''; ?>" value="<?php echo $confirm_password; ?>">
+                        <label for="confirm_password">Confirm Password <span class="text-destructive">*</span></label>
+                        <input type="password" name="confirm_password" id="confirm_password" class="form-control <?php echo (!empty($confirm_password_err)) ? 'is-invalid' : ''; ?>" placeholder="Confirm your password" required>
                         <span class="invalid-feedback"><?php echo $confirm_password_err; ?></span>
                     </div>
+
                     <div class="form-group">
                         <input type="submit" class="btn btn-primary w-full py-6 rounded-xl shadow-lg" value="Sign Up">
                     </div>
-                    <p>Already have an account? <a href="login.php">Login here</a>.</p>
+
+                    <p class="text-center text-sm text-muted-foreground">Already have an account? <a href="login.php" class="text-primary hover:underline">Login here</a>.</p>
                 </form>
             </div>
         </div>
