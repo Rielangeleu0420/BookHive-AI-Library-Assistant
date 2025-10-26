@@ -1,345 +1,891 @@
 <?php
 require_once 'functions.php';
+require_once 'config.php';
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 
-// Ensure user is logged in and is a student
-if (!isLoggedIn() || getUserRole() !== 'student') {
-    // This file is loaded via AJAX, so return an error message or empty content
-    echo '<div class="ai-chat-message-bot"><div class="ai-chat-bubble ai-chat-bubble-bot">Unauthorized access. Please log in as a student.</div></div>';
+// Ensure user is logged in
+if (!isLoggedIn()) {
+    echo '<div class="ai-chat-message-bot"><div class="ai-chat-bubble ai-chat-bubble-bot">Please log in to use the AI assistant.</div></div>';
     exit();
 }
 
 $user_id = $_SESSION['user_id'];
 $user_name = $_SESSION['full_name'] ?? $_SESSION['username'];
-
-// This file will handle both displaying the chat interface and processing AJAX requests for AI responses.
-// For simplicity, initial load will just display the interface.
-// Subsequent messages will be handled by an AJAX call to this same file with a 'message' parameter.
+$user_role = getUserRole();
 
 // Handle incoming AJAX message
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['message'])) {
     header('Content-Type: application/json');
     $user_message = trim($_POST['message']);
-
-    // Simulate AI response logic
-    $response_data = handleAIChatMessage($user_message, $user_id, $conn);
-    echo json_encode($response_data);
+    
+    error_log("AI Chat - Processing: " . $user_message);
+    
+    if (empty($user_message)) {
+        echo json_encode(['success' => false, 'message' => 'Empty message.']);
+        exit();
+    }
+    
+    // Simple response logic for testing
+    $response = handleSimpleAIResponse($user_message, $user_id, $conn);
+    echo json_encode($response);
     exit();
 }
 
-// Function to simulate AI response
-function handleAIChatMessage($message, $user_id, $conn) {
+function handleSimpleAIResponse($message, $user_id, $conn) {
+    global $user_name;
+    
     $lower_message = strtolower($message);
-    $response = [
-        'content' => "I'm sorry, I didn't understand that. Can you please rephrase or choose from the suggestions?",
-        'suggestions' => [
-            'Find a specific book',
-            'Check book availability',
-            'Find books elsewhere',
-            'Get library directions'
-        ]
-    ];
-
-    // Mock responses based on keywords
-    $mock_responses = [
-        'availability' => [
-            'content' => 'I can help you check book availability! Here are some books currently available:\n\n📚 "Machine Learning Fundamentals" by Dr. Alex Kumar - Available (3 copies)\n📚 "Digital Signal Processing" by Maria Rodriguez - Available (2 copies)\n📚 "Modern Physics" by Robert Johnson - Checked out (next available: March 25)\n\n💡 Can\'t find what you need? I can suggest where to find it outside our library!',
-            'suggestions' => ['Reserve a book', 'Search for specific title', 'Find books elsewhere', 'Browse by category']
-        ],
-        'recommendations' => [
-            'content' => 'Based on your reading history in Computer Science, I recommend:\n\n⭐ "Advanced Algorithms" by Jennifer Lee - Perfect for building on your current knowledge\n⭐ "System Design Interview" by Alex Xu - Great for practical applications\n⭐ "Clean Code" by Robert Martin - Essential for software development',
-            'suggestions' => ['Get more recommendations', 'Check availability', 'Add to reading list']
-        ],
-        'status' => [
-            'content' => 'Here\'s your current borrowing status:\n\n📖 Current loans: 3 books\n⏰ Due soon: "Advanced Mathematics" (due tomorrow)\n🚨 Overdue: 1 book\n💰 Outstanding fines: ₱500\n📚 Total borrowed this semester: 8 books\n\nWould you like me to help you renew any books or pay fines?',
-            'suggestions' => ['Renew books', 'View loan history', 'Pay fines', 'Check penalties']
-        ],
-        'interests' => [
-            'content' => 'I notice you enjoy Computer Science and Mathematics! Here are some personalized suggestions:\n\n🎯 "Quantum Computing Explained" - New arrival, trending topic\n🎯 "Statistical Learning Theory" - Combines your interests\n🎯 "Artificial Intelligence: A Guide" - Popular with CS students',
-            'suggestions' => ['Save to favorites', 'Get similar books', 'Set up alerts']
-        ],
-        'penalties' => [
-            'content' => 'Here\'s your penalty information:\n\n💰 Total outstanding fines: ₱500\n📚 "Advanced Mathematics" - ₱500 (5 days overdue)\n\nPenalty rate: ₱100 per day\n\n💡 Tip: Return books on time to avoid future penalties. You can also set up due date reminders!',
-            'suggestions' => ['Pay fines', 'Set reminders', 'Renew books', 'Contact librarian']
-        ],
-        'payment' => [
-            'content' => 'I can help you with fine payments! Here are your options:\n\n💳 Online payment portal\n🏦 In-person at circulation desk\n📱 GCash or PayMaya\n💰 Bank transfer\n\nCurrent balance: ₱500\n\nWould you like me to guide you through the payment process?',
-            'suggestions' => ['Pay online', 'Payment help', 'Contact librarian', 'View payment history']
-        ],
-        'fines' => [
-            'content' => 'Let me check your current fines:\n\n💰 Outstanding Amount: ₱500\n📖 Overdue Book: "Advanced Mathematics"\n📅 Days Overdue: 5 days\n📊 Rate: ₱100 per day\n\n⚡ Quick actions available:',
-            'suggestions' => ['Pay now', 'Request extension', 'View details', 'Contact support']
-        ],
-        'renew' => [
-            'content' => 'I can help you renew your books! Here\'s what I found:\n\n📚 Eligible for renewal:\n• "Introduction to Computer Science" - Can extend 7 days\n• "Data Structures and Algorithms" - Can extend 7 days\n\n❌ Cannot renew:\n• "Advanced Mathematics" - Overdue (₱500 fine)\n\nWould you like me to proceed with the renewals?',
-            'suggestions' => ['Renew eligible books', 'Pay fine first', 'Check renewal policy', 'Set reminders']
-        ],
-        'unavailable' => [
-            'content' => 'This book is not available in our library right now. Here\'s where you can find it:\n\n🏪 **Physical Stores:**\n• National Book Store (nationwide branches)\n• Fully Booked (major malls)\n• Book Sale (discount bookstores)\n• Powerbooks (select locations)\n\n🌐 **Online Options:**\n• Shopee Philippines\n• Lazada Philippines\n• Amazon (international shipping)\n• Book Depository\n\n📚 **Academic Sources:**\n• Other university libraries\n• DLSU Library (partner institution)\n• Ateneo Library (reciprocal borrowing)\n\nWould you like me to help you with anything else?',
-            'suggestions' => ['Find similar books', 'Reserve when available', 'Get store locations', 'Check partner libraries']
-        ],
-        'bookstores' => [
-            'content' => 'Here are the best places to find books outside our library:\n\n🏬 **Major Bookstore Chains:**\n• National Book Store - Most comprehensive, 200+ branches nationwide\n• Fully Booked - Premium selection, major malls (BGC, Makati, QC)\n• Powerbooks - Academic and professional books\n• Book Sale - Discounted books, great for students\n\n🛒 **Online Marketplaces:**\n• Shopee Philippines - Wide selection, competitive prices\n• Lazada Philippines - Fast delivery, frequent sales\n• Carousell - Second-hand books from locals\n\n📍 **Specialty Stores:**\n• Bookmark (Makati) - Independent bookstore\n• Books for Less - Affordable options\n• Comic Odyssey - For graphic novels and comics\n\n💡 **Money-saving tips:** Check for student discounts, book fairs, and online promotions!',
-            'suggestions' => ['Get store locations', 'Compare prices', 'Find textbook discounts', 'Check library partners']
-        ],
-        'notfound' => [
-            'content' => 'I couldn\'t find that book in our collection. But don\'t worry! Here are your options:\n\n📋 **What I can do:**\n• Request the library to acquire this book\n• Suggest similar available titles\n• Help you find it at partner institutions\n• Guide you to external sources\n\n🏪 **Where to find it:**\n• National Book Store or our partner bookstores\n• Online platforms like Shopee or Lazada\n• Other university libraries (UP, DLSU, Ateneo)\n• Digital libraries (if available online)\n\n📝 **Next steps:**\n• Submit a book acquisition request\n• Check our interlibrary loan program\n• Browse our recommended alternatives',
-            'suggestions' => ['Submit book request', 'Find similar books', 'Check other libraries', 'Browse alternatives']
-        ],
-        'partners' => [
-            'content' => 'Our library has partnerships with several institutions where you can access books:\n\n🏫 **Academic Partners:**\n• De La Salle University Library\n• Ateneo de Manila University Library\n• University of the Philippines Library System\n• Miriam College Library\n\n🏪 **Bookstore Partners:**\n• National Book Store (10% student discount)\n• Fully Booked (special academic pricing)\n• Rex Book Store (textbook specialists)\n\n📚 **Digital Resources:**\n• EBSCO Academic databases\n• ProQuest research platform\n• Springer Nature eBooks\n• IEEE Xplore digital library\n\n💳 **How to access:**\n• Present your student ID\n• Some require library card registration\n• Digital resources available through campus network',
-            'suggestions' => ['Get partner access', 'View digital resources', 'Check requirements', 'Contact librarian']
-        ],
-        'bookrequest' => [
-            'content' => 'I can help you submit a book acquisition request! Here\'s how:\n\n📝 **Request Process:**\n• Fill out the book request form\n• Provide book details (title, author, ISBN)\n• Justify why it\'s needed for studies\n• Estimated processing time: 2-4 weeks\n\n📋 **Required Information:**\n• Complete bibliographic details\n• Course relevance\n• Number of students who might use it\n• Preferred format (print/digital)\n\n✅ **What happens next:**\n• Librarian reviews the request\n• Budget and relevance assessment\n• Approval notification via email\n• Book added to collection',
-            'suggestions' => ['Submit request form', 'Check request status', 'View acquisition policy', 'Contact librarian']
-        ],
-        'directions' => [
-            'content' => 'I can help you navigate our library! Here are the main sections:\n\n🗺️ **Library Map:**\n• Ground Floor: Circulation, New Arrivals, Magazines\n• 2nd Floor: Sciences, Mathematics, Engineering\n• 3rd Floor: Humanities, Literature, Arts\n• 4th Floor: Computer Science, IT, Research\n\n📍 **Finding Books:**\n• Use call numbers to locate books\n• Follow the shelf signs and colors\n• Ask library staff for assistance\n• Use our digital map on tablets\n\n🚶 **Navigation Tips:**\n• Books are arranged by Dewey Decimal System\n• Each section has clear signage\n• Study areas available on each floor',
-            'suggestions' => ['Get specific directions', 'View digital map', 'Find study areas', 'Ask for help']
-        ]
-    ];
-
-    // Check for specific book titles and simulate checking availability
-    $is_book_query = str_contains($lower_message, 'book') && !str_contains($lower_message, 'recommendation') && !str_contains($lower_message, 'suggest');
-    $book_titles = [
-        'machine learning', 'algorithms', 'data structures', 'physics', 'mathematics',
-        'chemistry', 'biology', 'history', 'literature', 'psychology', 'economics',
-        'philosophy', 'computer science', 'engineering', 'calculus', 'statistics'
-    ];
-
-    $mentions_specific_book = false;
-    foreach ($book_titles as $title) {
-        if (str_contains($lower_message, $title)) {
-            $mentions_specific_book = true;
-            break;
-        }
+    
+    // Check for different intents
+    if (strpos($lower_message, 'loan') !== false || strpos($lower_message, 'borrow') !== false || strpos($lower_message, 'borrowing status') !== false) {
+        return handleLoanQuery($user_id, $conn);
+    } elseif (strpos($lower_message, 'search') !== false || strpos($lower_message, 'find') !== false || strpos($lower_message, 'find a book') !== false || strpos($lower_message, 'find a specific book') !== false) {
+        return handleSearchQuery($message, $conn);
+    } elseif (strpos($lower_message, 'popular') !== false || strpos($lower_message, 'top') !== false || strpos($lower_message, 'most borrowed') !== false) {
+        return handlePopularBooks($conn);
+    } elseif (strpos($lower_message, 'recommend') !== false || strpos($lower_message, 'suggest') !== false) {
+        return handleRecommendation($user_id, $conn);
+    } elseif (strpos($lower_message, 'penalty') !== false || strpos($lower_message, 'fine') !== false || strpos($lower_message, 'check fines') !== false) {
+        return handlePenalties($user_id, $conn);
+    } elseif (strpos($lower_message, 'availability') !== false || strpos($lower_message, 'available') !== false || strpos($lower_message, 'check book availability') !== false) {
+        return handleAvailabilityQuery($message, $conn);
+    } elseif (strpos($lower_message, 'bookstore') !== false || strpos($lower_message, 'partner') !== false || strpos($lower_message, 'find books elsewhere') !== false || strpos($lower_message, 'partner libraries') !== false) {
+        return handlePartnerLibraries($conn);
+    } elseif (strpos($lower_message, 'direction') !== false || strpos($lower_message, 'location') !== false || strpos($lower_message, 'get library directions') !== false) {
+        return handleLibraryDirections();
+    } elseif (strpos($lower_message, 'hello') !== false || strpos($lower_message, 'hi') !== false || strpos($lower_message, 'hey') !== false) {
+        return [
+            'content' => "Hello $user_name! I'm your AI library assistant. I can help you find specific books, check availability, manage loans, handle penalties, and guide you to external sources when books aren't available in our library. Just ask me about any book or library service!",
+            'suggestions' => ['Find a specific book', 'Check book availability', 'Borrowing status', 'Check fines']
+        ];
+    } else {
+        // REVISION: If no intent matches, assume it's a book search (e.g., user typed a title directly)
+        // This fixes the issue where typing "Harry Potter" doesn't work
+        return handleSearchQuery($message, $conn);
     }
-
-    if ($is_book_query && $mentions_specific_book) {
-        $unavailable_books = ['advanced calculus', 'quantum physics', 'organic chemistry', 'medieval history'];
-        $is_unavailable = false;
-        foreach ($unavailable_books as $book) {
-            if (str_contains($lower_message, explode(' ', $book)[0]) || str_contains($lower_message, explode(' ', $book)[1])) {
-                $is_unavailable = true;
-                break;
-            }
-        }
-
-        if ($is_unavailable) {
-            $response = [
-                'content' => "I checked our catalog and that book is currently not available in our library. Here's what I can do to help:\n\n📚 **Alternative Solutions:**\n• Check if we have similar books on the topic\n• Help you find it at external sources\n• Submit a book acquisition request\n• Access it through partner libraries\n\n🏪 **Where to find it:**\n• National Book Store - Most likely to have academic books\n• Fully Booked - Premium selection in major malls\n• Online: Shopee Philippines, Lazada Philippines\n• Academic partners: DLSU, Ateneo, UP libraries\n\n📋 **Next steps:**\n• I can search for similar available books\n• Guide you to the nearest bookstore\n• Help with interlibrary loan requests",
-                'suggestions' => ['Find similar books', 'Get store locations', 'Submit book request', 'Check partner libraries']
-            ];
-        } else {
-            $response = [
-                'content' => "Great! I found that book in our collection:\n\n📚 **Book Status:**\n• Available: 2 copies on shelf\n• Location: Section B - Computer Science\n• Call number: QA76.73.C15\n• Can be borrowed for 14 days\n\n✅ **Quick actions:**\n• Reserve this book now\n• Get directions to the section\n• Check for related books\n• View reviews and ratings",
-                'suggestions' => ['Reserve book', 'Get directions', 'Find related books', 'View details']
-            ];
-        }
-    } elseif (str_contains($lower_message, 'availability') || str_contains($lower_message, 'available')) {
-        $response = $mock_responses['availability'];
-    } elseif (str_contains($lower_message, 'status') || str_contains($lower_message, 'loan') || str_contains($lower_message, 'borrow')) {
-        $response = $mock_responses['status'];
-    } elseif (str_contains($lower_message, 'interest') || str_contains($lower_message, 'favorite') || str_contains($lower_message, 'like')) {
-        $response = $mock_responses['interests'];
-    } elseif (str_contains($lower_message, 'recommend') || str_contains($lower_message, 'suggest')) {
-        $response = $mock_responses['recommendations'];
-    } elseif (str_contains($lower_message, 'penalties') || str_contains($lower_message, 'penalty') || str_contains($lower_message, 'fine')) {
-        $response = $mock_responses['penalties'];
-    } elseif (str_contains($lower_message, 'payment') || str_contains($lower_message, 'pay')) {
-        $response = $mock_responses['payment'];
-    } elseif (str_contains($lower_message, 'fines') || str_contains($lower_message, 'check my fines')) {
-        $response = $mock_responses['fines'];
-    } elseif (str_contains($lower_message, 'renew')) {
-        $response = $mock_responses['renew'];
-    } elseif (str_contains($lower_message, 'not available') || str_contains($lower_message, 'unavailable') || str_contains($lower_message, 'out of stock')) {
-        $response = $mock_responses['unavailable'];
-    } elseif (str_contains($lower_message, 'bookstore') || str_contains($lower_message, 'book store') || str_contains($lower_message, 'where to buy') || str_contains($lower_message, 'find books elsewhere')) {
-        $response = $mock_responses['bookstores'];
-    } elseif (str_contains($lower_message, 'not found') || str_contains($lower_message, 'can\'t find') || str_contains($lower_message, 'cannot find')) {
-        $response = $mock_responses['notfound'];
-    } elseif (str_contains($lower_message, 'partner') || str_contains($lower_message, 'other librar') || str_contains($lower_message, 'check other libraries')) {
-        $response = $mock_responses['partners'];
-    } elseif (str_contains($lower_message, 'submit book request') || str_contains($lower_message, 'book request') || str_contains($lower_message, 'acquire') || str_contains($lower_message, 'request book')) {
-        $response = $mock_responses['bookrequest'];
-    } elseif (str_contains($lower_message, 'directions') || str_contains($lower_message, 'where is') || str_contains($lower_message, 'navigate') || str_contains($lower_message, 'find section')) {
-        $response = $mock_responses['directions'];
-    }
-
-    return $response;
 }
 
-// Initial chat messages for display when AIChat.php is loaded directly (via AJAX for the modal)
-?>
-<div class="ai-chat-quick-actions">
-    <button class="ai-chat-quick-action-btn" onclick="sendAIChatMessage('Check book availability')">
-        <i data-lucide="book-open"></i>
-        <span>Check Availability</span>
-    </button>
-    <button class="ai-chat-quick-action-btn" onclick="sendAIChatMessage('I need help finding a specific book')">
-        <i data-lucide="search"></i>
-        <span>Find a Book</span>
-    </button>
-    <button class="ai-chat-quick-action-btn" onclick="sendAIChatMessage('Show my borrowing status')">
-        <i data-lucide="clock"></i>
-        <span>Borrowing Status</span>
-    </button>
-    <button class="ai-chat-quick-action-btn" onclick="sendAIChatMessage('Check my fines')">
-        <i data-lucide="dollar-sign"></i>
-        <span>Check Fines</span>
-    </button>
-    <button class="ai-chat-quick-action-btn" onclick="sendAIChatMessage('Where can I buy books?')">
-        <i data-lucide="map-pin"></i>
-        <span>Find Bookstores</span>
-    </button>
-    <button class="ai-chat-quick-action-btn" onclick="sendAIChatMessage('Check partner libraries')">
-        <i data-lucide="external-link"></i>
-        <span>Partner Libraries</span>
-    </button>
-</div>
+function handleLoanQuery($user_id, $conn) {
+    // FIXED: Changed student_id to user_id
+    $sql = "SELECT b.title, l.due_date, l.status 
+            FROM loans l 
+            JOIN books b ON l.book_id = b.book_id 
+            WHERE l.user_id = ? 
+            ORDER BY l.due_date DESC 
+            LIMIT 5";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("i", $user_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $loans = $result->fetch_all(MYSQLI_ASSOC);
+    $stmt->close();
+    
+    if (!empty($loans)) {
+        $content = "**Your Borrowing Status:**\n\n";
+        foreach ($loans as $loan) {
+            $status = $loan['status'] === 'overdue' ? '🔴 OVERDUE' : '🟢 On Time';
+            $content .= "• **{$loan['title']}**\n  Due: {$loan['due_date']} | Status: {$status}\n\n";
+        }
+        return [
+            'content' => $content,
+            'suggestions' => ['Check fines', 'Search books', 'Popular books']
+        ];
+    } else {
+        return [
+            'content' => "You don't have any current loans. Would you like to browse our book collection?",
+            'suggestions' => ['Search books', 'Popular books', 'Get recommendations']
+        ];
+    }
+}
 
-<div id="ai-chat-messages-list" class="ai-chat-messages-list">
-    <div class="ai-chat-message-container ai-chat-message-bot">
-        <div class="ai-chat-avatar ai-chat-avatar-bot">
-            <i data-lucide="bot" class="w-4 h-4"></i>
-        </div>
-        <div class="ai-chat-bubble ai-chat-bubble-bot">
-            Hello <?php echo htmlspecialchars($user_name); ?>! I'm your AI library assistant. I can help you find specific books, check availability, manage loans, handle penalties, and guide you to external sources when books aren't available in our library. Just ask me about any book or library service!
-            <span class="ai-chat-timestamp"><?php echo date('h:i A'); ?></span>
-            <div class="ai-chat-suggestions">
-                <span class="ai-chat-suggestion-badge" onclick="sendAIChatMessage('Find a specific book')">Find a specific book</span>
-                <span class="ai-chat-suggestion-badge" onclick="sendAIChatMessage('Check book availability')">Check book availability</span>
-                <span class="ai-chat-suggestion-badge" onclick="sendAIChatMessage('Find books elsewhere')">Find books elsewhere</span>
-                <span class="ai-chat-suggestion-badge" onclick="sendAIChatMessage('Get library directions')">Get library directions</span>
+function handleSearchQuery($message, $conn) {
+    // Extract search term
+    $search_term = str_ireplace(['search', 'find', 'for', 'book', 'books', 'look', 'specific'], '', $message);
+    $search_term = trim($search_term);
+    
+    if (empty($search_term) || strlen($search_term) < 2) {
+        return [
+            'content' => "What book or author would you like me to search for? Please be more specific.",
+            'suggestions' => ['Harry Potter', 'Computer Science', 'Mathematics', 'Science Fiction']
+        ];
+    }
+    
+    $sql = "SELECT b.title, a.author_name, b.quantity_available 
+            FROM books b 
+            LEFT JOIN authors a ON b.author_id = a.author_id 
+            WHERE b.title LIKE ? OR a.author_name LIKE ? 
+            LIMIT 5";
+    $stmt = $conn->prepare($sql);
+    $like_term = "%" . $search_term . "%";
+    $stmt->bind_param("ss", $like_term, $like_term);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $books = $result->fetch_all(MYSQLI_ASSOC);
+    $stmt->close();
+    
+    if (!empty($books)) {
+        $content = "**Books Found for '$search_term':**\n\n";
+        $all_available = true;  // Track if any book is unavailable
+        foreach ($books as $book) {
+            $status = $book['quantity_available'] > 0 ? "✅ Available ({$book['quantity_available']} copies)" : "❌ Checked Out";
+            $content .= "• **{$book['title']}** by {$book['author_name']}\n  Status: {$status}\n\n";
+            if ($book['quantity_available'] == 0) {
+                $all_available = false;
+            }
+        }
+        
+        // REVISION: If any book is unavailable, recommend partner libraries (show ALL, no filter)
+        if (!$all_available) {
+            $libraries = getPartnerLibraries();  // Remove $search_term to show all libraries
+            $content .= "**Some books are unavailable here. Try these partner libraries:**\n";
+            foreach ($libraries as $lib) {
+                $content .= "• {$lib['name']} - {$lib['location']}\n";
+            }
+        }
+        
+        return [
+            'content' => $content,
+            'suggestions' => ['Check availability', 'Popular books', 'My loans']
+        ];
+    } else {
+        // REVISION: If no books found, recommend partner libraries (show ALL, no filter)
+        $libraries = getPartnerLibraries();  // Remove $search_term to show all libraries
+        $content = "No books found for '$search_term' in our library.\n\n";
+        $content .= "**Try these partner libraries where it may be available:**\n";
+        foreach ($libraries as $lib) {
+            $content .= "• {$lib['name']} - {$lib['location']}\n";
+        }
+        
+        return [
+            'content' => $content,
+            'suggestions' => ['Popular books', 'Bookstores', 'Partner libraries']
+        ];
+    }
+}
+
+function handleAvailabilityQuery($message, $conn) {
+    $search_term = str_ireplace(['check', 'availability', 'available', 'for', 'is', 'book'], '', $message);
+    $search_term = trim($search_term);
+    
+    if (empty($search_term)) {
+        return [
+            'content' => "Which book would you like to check availability for?",
+            'suggestions' => ['Harry Potter', 'Computer Science', 'Mathematics', 'Physics']
+        ];
+    }
+    
+    $sql = "SELECT b.title, a.author_name, b.quantity_available 
+            FROM books b 
+            LEFT JOIN authors a ON b.author_id = a.author_id 
+            WHERE b.title LIKE ? 
+            LIMIT 3";
+    $stmt = $conn->prepare($sql);
+    $like_term = "%" . $search_term . "%";
+    $stmt->bind_param("s", $like_term);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $books = $result->fetch_all(MYSQLI_ASSOC);
+    $stmt->close();
+    
+    if (!empty($books)) {
+        $content = "**Book Availability:**\n\n";
+        foreach ($books as $book) {
+            $status = $book['quantity_available'] > 0 ? "✅ **Available** ({$book['quantity_available']} copies)" : "❌ **Not Available**";
+            $content .= "• **{$book['title']}** by {$book['author_name']}\n  Status: {$status}\n\n";
+        }
+        
+        return [
+            'content' => $content,
+            'suggestions' => ['Search books', 'Popular books', 'My loans']
+        ];
+    } else {
+        return [
+            'content' => "No books found matching '$search_term'.",
+            'suggestions' => ['Search books', 'Popular books', 'Partner libraries']
+        ];
+    }
+}
+
+function handlePartnerLibraries($conn) {
+    $libraries = getPartnerLibraries();
+    
+    $content = "**Partner Libraries & Bookstores:**\n\n";
+    foreach ($libraries as $lib) {
+        $contact = $lib['contact_info'] ?? 'Contact for hours';
+        $content .= "• **{$lib['name']}**\n  📍 {$lib['location']}\n  📞 {$contact}\n\n";
+    }
+    
+    return [
+        'content' => $content,
+        'suggestions' => ['Get library directions', 'Search books', 'Check availability']
+    ];
+}
+
+function handleLibraryDirections() {
+    $content = "**Library Directions & Information:**\n\n";
+    $content .= "• **Main Library**\n  📍 123 Library Street, Academic City\n  🕒 Mon-Fri: 8AM-8PM, Sat-Sun: 10AM-6PM\n  📞 (555) 123-4567\n\n";
+    $content .= "• **Digital Access**\n  🌐 ebook.access.com\n  📱 Available 24/7\n\n";
+    $content .= "Need specific directions? Visit our website or contact us!";
+    
+    return [
+        'content' => $content,
+        'suggestions' => ['Partner libraries', 'Search books', 'Check availability']
+    ];
+}
+
+function handlePopularBooks($conn) {
+    $sql = "SELECT b.title, a.author_name, COUNT(l.loan_id) as borrow_count 
+            FROM loans l 
+            JOIN books b ON l.book_id = b.book_id 
+            LEFT JOIN authors a ON b.author_id = a.author_id 
+            GROUP BY b.book_id 
+            ORDER BY borrow_count DESC 
+            LIMIT 5";
+    $stmt = $conn->prepare($sql);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $books = $result->fetch_all(MYSQLI_ASSOC);
+    $stmt->close();
+    
+    $content = "**Most Popular Books:**\n\n";
+    foreach ($books as $book) {
+        $content .= "• **{$book['title']}** by {$book['author_name']}\n  📊 Borrowed {$book['borrow_count']} times\n\n";
+    }
+    
+    return [
+        'content' => $content,
+        'suggestions' => ['Search books', 'My loans', 'Get recommendations']
+    ];
+}
+
+function handleRecommendation($user_id, $conn) {
+    $sql = "SELECT b.title, a.author_name, b.quantity_available 
+            FROM books b 
+            LEFT JOIN authors a ON b.author_id = a.author_id 
+            WHERE b.quantity_available > 0 
+            ORDER BY RAND() 
+            LIMIT 3";
+    $stmt = $conn->prepare($sql);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $books = $result->fetch_all(MYSQLI_ASSOC);
+    $stmt->close();
+    
+    $content = "**Book Recommendations for You:**\n\n";
+    foreach ($books as $book) {
+        $content .= "• **{$book['title']}** by {$book['author_name']}\n  ✅ Available for borrowing\n\n";
+    }
+    
+    return [
+        'content' => $content,
+        'suggestions' => ['Search books', 'Popular books', 'My loans']
+    ];
+}
+
+function handlePenalties($user_id, $conn) {
+    // FIXED: Changed student_id to user_id
+    $sql = "SELECT p.penalty_id, b.title, p.amount, p.status 
+            FROM penalties p 
+            JOIN loans l ON p.loan_id = l.loan_id 
+            JOIN books b ON l.book_id = b.book_id 
+            WHERE l.user_id = ? AND p.status != 'paid'";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("i", $user_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $penalties = $result->fetch_all(MYSQLI_ASSOC);
+    $stmt->close();
+    
+    if (!empty($penalties)) {
+        $total = array_sum(array_column($penalties, 'amount'));
+        $content = "**Your Current Fines:**\n\nTotal: ₱" . number_format($total, 2) . "\n\n";
+        foreach ($penalties as $penalty) {
+            $content .= "• **{$penalty['title']}**\n  Amount: ₱" . number_format($penalty['amount'], 2) . " | Status: {$penalty['status']}\n\n";
+        }
+        return [
+            'content' => $content,
+            'suggestions' => ['My loans', 'Search books', 'Popular books']
+        ];
+    } else {
+        return [
+            'content' => "You don't have any outstanding fines. Great job!",
+            'suggestions' => ['My loans', 'Search books', 'Popular books']
+        ];
+    }
+}
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BookHive AI Assistant</title>
+    <style>
+        /* AI Chat Popup Styles */
+        .ai-chat-popup {
+            position: fixed;
+            bottom: 100px;
+            right: 30px;
+            width: 380px;
+            height: 600px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+            z-index: 10000;
+            overflow: hidden;
+            border: 1px solid #e5e7eb;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        /* Header Section */
+        .ai-chat-header {
+            background: linear-gradient(135deg, #BD1B19, #A01513);
+            color: white;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-radius: 16px 16px 0 0;
+        }
+
+        .ai-chat-title {
+            font-size: 18px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .ai-chat-close-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s;
+        }
+
+        .ai-chat-close-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Messages Area */
+        .ai-chat-messages-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f8fafc;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .ai-chat-message-container {
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+        }
+
+        .ai-chat-message-user {
+            flex-direction: row-reverse;
+        }
+
+        .ai-chat-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .ai-chat-avatar-bot {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .ai-chat-avatar-user {
+            background: #10b981;
+            color: white;
+        }
+
+        .ai-chat-bubble {
+            max-width: 75%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            position: relative;
+            word-wrap: break-word;
+            line-height: 1.4;
+            font-size: 14px;
+        }
+
+        .ai-chat-bubble-bot {
+            background: white;
+            border: 1px solid #e5e7eb;
+            color: #374151;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border-bottom-left-radius: 4px;
+        }
+
+        .ai-chat-bubble-user {
+            background: #3b82f6;
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .ai-chat-bubble p {
+            margin: 0;
+            white-space: pre-line;
+        }
+
+        .ai-chat-bubble strong {
+            font-weight: 600;
+        }
+
+        .ai-chat-timestamp {
+            font-size: 11px;
+            color: #9ca3af;
+            margin-top: 6px;
+            display: block;
+            text-align: right;
+        }
+
+        .ai-chat-suggestions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .ai-chat-suggestion-badge {
+            background: white;
+            border: 1px solid #d1d5db;
+            border-radius: 16px;
+            padding: 6px 12px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #374151;
+            font-weight: 500;
+        }
+
+        .ai-chat-suggestion-badge:hover {
+            background: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+        }
+
+        /* Input Area */
+        .ai-chat-input-area {
+            display: flex;
+            gap: 12px;
+            padding: 16px;
+            border-top: 1px solid #e5e7eb;
+            background: white;
+            align-items: flex-end;
+        }
+
+        #aiChatInput {
+            flex: 1;
+            border: 1px solid #d1d5db;
+            border-radius: 20px;
+            padding: 12px 16px;
+            resize: none;
+            font-family: inherit;
+            font-size: 14px;
+            line-height: 1.5;
+            max-height: 120px;
+            outline: none;
+            transition: border-color 0.2s;
+            background: #f9fafb;
+        }
+
+        #aiChatInput:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            background: white;
+        }
+
+        #aiChatSendBtn {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex-shrink: 0;
+            font-size: 16px;
+        }
+
+        #aiChatSendBtn:hover {
+            background: #2563eb;
+            transform: scale(1.05);
+        }
+
+        /* Typing Indicator */
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 4px;
+        }
+
+        .typing-dots span {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #6b7280;
+            animation: typing 1.4s infinite ease-in-out;
+        }
+
+        .typing-dots span:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dots span:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes typing {
+            0%, 80%, 100% { 
+                transform: scale(0.8);
+                opacity: 0.5;
+            }
+            40% { 
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        /* Scrollbar styling */
+        .ai-chat-messages-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .ai-chat-messages-list::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 3px;
+        }
+
+        .ai-chat-messages-list::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 3px;
+        }
+
+        .ai-chat-messages-list::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+
+        /* Quick Actions */
+        .quick-actions-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            padding: 16px;
+            background: #f8fafc;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .action-button {
+            background: white;
+            border: 1px solid #d1d5db;
+            border-radius: 10px;
+            padding: 10px 12px;
+            font-size: 13px;
+            color: #374151;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: left;
+            font-weight: 500;
+        }
+
+        .action-button:hover {
+            background: #f3f4f6;
+            border-color: #9ca3af;
+            transform: translateY(-1px);
+        }
+    </style>
+</head>
+<body>
+    <div class="ai-chat-popup">
+        <!-- Header Section -->
+        <div class="ai-chat-header">
+            <div class="ai-chat-title">
+                <i data-lucide="bot"></i>
+                <span>AI Library Assistant</span>
             </div>
+            <button class="ai-chat-close-btn" onclick="closeAIChat()">
+                &times;
+            </button>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="quick-actions-grid">
+            <button type="button" class="action-button" data-message="Find a Book">Find a Book</button>
+            <button type="button" class="action-button" data-message="Borrowing Status">Borrowing Status</button>
+            <button type="button" class="action-button" data-message="Check fines">Check fines</button>
+            <button type="button" class="action-button" data-message="Partner Libraries">Partner Libraries</button>
+        </div>
+
+        <!-- Messages Area -->
+        <div id="ai-chat-messages-list" class="ai-chat-messages-list">
+            <!-- Initial Bot Message -->
+            <div class="ai-chat-message-container ai-chat-message-bot">
+                <div class="ai-chat-avatar ai-chat-avatar-bot">
+                    AI
+                </div>
+                <div class="ai-chat-bubble ai-chat-bubble-bot">
+                    <p>Hello <?php echo htmlspecialchars($user_name); ?>! I'm your AI library assistant. How can I help you today?</p>
+                    <span class="ai-chat-timestamp"><?php echo date('h:i A'); ?></span>
+                    
+                    <div class="ai-chat-suggestions">
+                        <span class="ai-chat-suggestion-badge" data-message="Find a specific book">Find a book</span>
+                        <span class="ai-chat-suggestion-badge" data-message="Check book availability">Check availability</span>
+                        <span class="ai-chat-suggestion-badge" data-message="My loans">My loans</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Input Area -->
+        <div class="ai-chat-input-area">
+            <textarea id="aiChatInput" placeholder="Ask me about books, loans, fines..." rows="1"></textarea>
+            <button id="aiChatSendBtn" type="button">
+                ↑
+            </button>
         </div>
     </div>
-    <div class="ai-chat-messages-end"></div>
-</div>
 
-<div class="ai-chat-input-area">
-    <input type="text" id="aiChatInput" class="ai-chat-input" placeholder="Ask me about books, loans, fines, or anything else..." onkeypress="if(event.keyCode === 13) sendAIChatMessage(this.value);" />
-    <button id="aiChatSendBtn" class="ai-chat-send-btn" onclick="sendAIChatMessage(document.getElementById('aiChatInput').value)">
-        <i data-lucide="send"></i>
-    </button>
-</div>
+    <script>
+        // Simple and robust JavaScript implementation
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('AI Chat Popup initialized');
+            
+            const aiChatMessagesList = document.getElementById('ai-chat-messages-list');
+            const aiChatInput = document.getElementById('aiChatInput');
+            const aiChatSendBtn = document.getElementById('aiChatSendBtn');
+            let isTyping = false;
 
-<script>
-    const aiChatMessagesList = document.getElementById('ai-chat-messages-list');
-    const aiChatInput = document.getElementById('aiChatInput');
-    const aiChatSendBtn = document.getElementById('aiChatSendBtn');
-    let isTyping = false;
+            // Setup all event listeners
+            function setupEventListeners() {
+                // Send button click
+                aiChatSendBtn.addEventListener('click', function() {
+                    const message = aiChatInput.value.trim();
+                    if (message) {
+                        sendAIChatMessage(message);
+                    }
+                });
 
-    function appendMessage(type, content, suggestions = []) {
-        const messageContainer = document.createElement('div');
-        messageContainer.classList.add('ai-chat-message-container');
-        messageContainer.classList.add(type === 'user' ? 'ai-chat-message-user' : 'ai-chat-message-bot');
+                // Enter key in input
+                aiChatInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        const message = aiChatInput.value.trim();
+                        if (message) {
+                            sendAIChatMessage(message);
+                        }
+                    }
+                });
 
-        const avatar = document.createElement('div');
-        avatar.classList.add('ai-chat-avatar');
-        avatar.classList.add(type === 'user' ? 'ai-chat-avatar-user' : 'ai-chat-avatar-bot');
-        avatar.innerHTML = `<i data-lucide="${type === 'user' ? 'user' : 'bot'}" class="w-4 h-4"></i>`;
+                // Auto-resize textarea
+                aiChatInput.addEventListener('input', function() {
+                    this.style.height = 'auto';
+                    this.style.height = (this.scrollHeight) + 'px';
+                });
 
-        const bubble = document.createElement('div');
-        bubble.classList.add('ai-chat-bubble');
-        bubble.classList.add(type === 'user' ? 'ai-chat-bubble-user' : 'ai-chat-bubble-bot');
-        bubble.innerHTML = `<p>${content.replace(/\n/g, '<br>')}</p><span class="ai-chat-timestamp">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>`;
+                // Action buttons
+                document.querySelectorAll('.action-button').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const message = this.getAttribute('data-message');
+                        sendAIChatMessage(message);
+                    });
+                });
 
-        if (suggestions.length > 0) {
-            const suggestionsDiv = document.createElement('div');
-            suggestionsDiv.classList.add('ai-chat-suggestions');
-            suggestions.forEach(suggestion => {
-                const badge = document.createElement('span');
-                badge.classList.add('ai-chat-suggestion-badge');
-                badge.textContent = suggestion;
-                badge.onclick = () => sendAIChatMessage(suggestion);
-                suggestionsDiv.appendChild(badge);
-            });
-            bubble.appendChild(suggestionsDiv);
-        }
+                // Suggestion badges
+                document.querySelectorAll('.ai-chat-suggestion-badge').forEach(badge => {
+                    badge.addEventListener('click', function() {
+                        const message = this.getAttribute('data-message');
+                        sendAIChatMessage(message);
+                    });
+                });
 
-        if (type === 'user') {
-            messageContainer.appendChild(bubble);
-            messageContainer.appendChild(avatar);
-        } else {
-            messageContainer.appendChild(avatar);
-            messageContainer.appendChild(bubble);
-        }
-
-        aiChatMessagesList.appendChild(messageContainer);
-        lucide.createIcons(); // Re-render Lucide icons for new messages
-        scrollToBottom();
-    }
-
-    function showTypingIndicator() {
-        if (isTyping) return;
-        isTyping = true;
-        const typingContainer = document.createElement('div');
-        typingContainer.classList.add('ai-chat-message-container', 'ai-chat-message-bot');
-        typingContainer.id = 'typing-indicator';
-
-        const avatar = document.createElement('div');
-        avatar.classList.add('ai-chat-avatar', 'ai-chat-avatar-bot');
-        avatar.innerHTML = `<i data-lucide="bot" class="w-4 h-4"></i>`;
-
-        const bubble = document.createElement('div');
-        bubble.classList.add('ai-chat-bubble', 'ai-chat-bubble-bot');
-        bubble.innerHTML = `
-            <div class="ai-chat-typing-indicator">
-                <div class="ai-chat-typing-dot"></div>
-                <div class="ai-chat-typing-dot"></div>
-                <div class="ai-chat-typing-dot"></div>
-            </div>
-        `;
-        typingContainer.appendChild(avatar);
-        typingContainer.appendChild(bubble);
-        aiChatMessagesList.appendChild(typingContainer);
-        scrollToBottom();
-    }
-
-    function hideTypingIndicator() {
-        isTyping = false;
-        const typingIndicator = document.getElementById('typing-indicator');
-        if (typingIndicator) {
-            typingIndicator.remove();
-        }
-    }
-
-    async function sendAIChatMessage(message) {
-        if (!message.trim() || isTyping) return;
-
-        appendMessage('user', message);
-        aiChatInput.value = '';
-        showTypingIndicator();
-
-        try {
-            const response = await fetch('AIChat.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: `message=${encodeURIComponent(message)}`
-            });
-
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                // Focus on input
+                aiChatInput.focus();
             }
 
-            const result = await response.json();
-            hideTypingIndicator();
-            appendMessage('bot', result.content, result.suggestions);
+            function appendMessage(type, content, suggestions = []) {
+                const messageContainer = document.createElement('div');
+                messageContainer.classList.add('ai-chat-message-container', `ai-chat-message-${type}`);
+                
+                const avatar = document.createElement('div');
+                avatar.classList.add('ai-chat-avatar', `ai-chat-avatar-${type}`);
+                avatar.textContent = type === 'user' ? 'You' : 'AI';
+                
+                const bubble = document.createElement('div');
+                bubble.classList.add('ai-chat-bubble', `ai-chat-bubble-${type}`);
+                
+                // Format content with line breaks and bold text
+                const formattedContent = content
+                    .replace(/\n/g, '<br>')
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                    
+                // Get current time in 12-hour format
+                const now = new Date();
+                const timeString = now.toLocaleTimeString('en-US', { 
+                    hour: '2-digit', 
+                    minute: '2-digit',
+                    hour12: true 
+                });
+                    
+                bubble.innerHTML = `<p>${formattedContent}</p><span class="ai-chat-timestamp">${timeString}</span>`;
+                
+                // Add suggestions if any
+                if (suggestions.length > 0) {
+                    const suggestionsDiv = document.createElement('div');
+                    suggestionsDiv.classList.add('ai-chat-suggestions');
+                    suggestions.forEach(suggestion => {
+                        const badge = document.createElement('span');
+                        badge.classList.add('ai-chat-suggestion-badge');
+                        badge.textContent = suggestion;
+                        badge.setAttribute('data-message', suggestion);
+                        badge.addEventListener('click', function() {
+                            sendAIChatMessage(suggestion);
+                        });
+                        suggestionsDiv.appendChild(badge);
+                    });
+                    bubble.appendChild(suggestionsDiv);
+                }
+                
+                messageContainer.appendChild(avatar);
+                messageContainer.appendChild(bubble);
+                aiChatMessagesList.appendChild(messageContainer);
+                
+                scrollToBottom();
+            }
 
-        } catch (error) {
-            console.error("Error sending message to AI Chat:", error);
-            hideTypingIndicator();
-            appendMessage('bot', "Oops! Something went wrong. Please try again later.", []);
-        }
-    }
+            async function sendAIChatMessage(message) {
+                if (!message || !message.trim()) {
+                    console.log('Empty message, skipping');
+                    return;
+                }
+                
+                if (isTyping) {
+                    console.log('Already typing, please wait');
+                    return;
+                }
+                
+                console.log('Sending message:', message);
+                
+                // Add user message to chat
+                appendMessage('user', message);
+                aiChatInput.value = '';
+                aiChatInput.style.height = 'auto';
+                
+                // Show typing indicator
+                showTypingIndicator();
+                
+                try {
+                    const response = await fetch('AIChat.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: `message=${encodeURIComponent(message)}`
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
+                    const result = await response.json();
+                    console.log('Response received:', result);
+                    
+                    hideTypingIndicator();
+                    
+                    if (result.content) {
+                        appendMessage('bot', result.content, result.suggestions || []);
+                    } else {
+                        appendMessage('bot', 'I apologize, but I encountered an issue. Please try again.', []);
+                    }
+                    
+                } catch (error) {
+                    console.error('Error sending message:', error);
+                    hideTypingIndicator();
+                    appendMessage('bot', 'Sorry, I am having trouble connecting. Please check your internet connection and try again.', []);
+                }
+            }
 
-    function scrollToBottom() {
-        aiChatMessagesList.scrollTop = aiChatMessagesList.scrollHeight;
-    }
+            function showTypingIndicator() {
+                if (isTyping) return;
+                
+                isTyping = true;
+                const typingContainer = document.createElement('div');
+                typingContainer.id = 'typing-indicator';
+                typingContainer.classList.add('ai-chat-message-container', 'ai-chat-message-bot');
+                
+                typingContainer.innerHTML = `
+                    <div class="ai-chat-avatar ai-chat-avatar-bot">
+                        AI
+                    </div>
+                    <div class="ai-chat-bubble ai-chat-bubble-bot typing-indicator">
+                        <div class="typing-dots">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                    </div>
+                `;
+                
+                aiChatMessagesList.appendChild(typingContainer);
+                scrollToBottom();
+            }
 
-    // Initial scroll to bottom when chat is loaded
-    document.addEventListener('DOMContentLoaded', scrollToBottom);
-</script>
+            function hideTypingIndicator() {
+                isTyping = false;
+                const typingIndicator = document.getElementById('typing-indicator');
+                if (typingIndicator) {
+                    typingIndicator.remove();
+                }
+            }
+
+            function scrollToBottom() {
+                if (aiChatMessagesList) {
+                    aiChatMessagesList.scrollTop = aiChatMessagesList.scrollHeight;
+                }
+            }
+
+            // Initialize
+            setupEventListeners();
+            scrollToBottom();
+
+            // Make functions available globally
+            window.sendAIChatMessage = sendAIChatMessage;
+            window.closeAIChat = function() {
+                document.querySelector('.ai-chat-popup').style.display = 'none';
+            };
+        });
+    </script>
+</body>
+</html>
+
+<?php
+// Close DB connection
+$conn->close();
+?>

@@ -130,7 +130,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         <select name="role" id="role" class="form-control <?php echo (!empty($login_err)) ? 'is-invalid' : ''; ?>">
                             <option value="">Select role</option>
                             <option value="student" <?php echo (isset($role) && $role == 'student') ? 'selected' : ''; ?>>☞ Student</option>
-                            <option value="librarian" <?php echo (isset($role) && $role == 'librarian') ? 'selected' : ''; ?>>Librarian</option>
+                            <option value="librarian" <?php echo (isset($role) && $role == 'librarian') ? 'selected' : ''; ?>>☞ Librarian</option>
                         </select>
                         <?php if (!empty($login_err)): ?>
                             <span class="invalid-feedback"><?php echo $login_err; ?></span>
@@ -163,7 +163,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     </div>
 
                     <div class="form-links">
-                        <a href="#" class="btn-link">Forgot Password?</a>
+                        <a href="forgot_password.php" class="btn-link">Forgot Password?</a>
                         <a href="signup.php" class="btn-link">Create Account</a>
                     </div>
                 </form>

@@ -28,8 +28,21 @@ $showAIChat = isset($_GET['show_ai_chat']) && $_GET['show_ai_chat'] === 'true';
     </script>
 </head>
 <body>
+<!-- Add this right after <body> in header.php -->
+<div class="main-header-wrapper">
+    <!-- Existing header code here -->
     <!-- Main Header -->
     <header class="main-header">
+        <?php if ($current_role === 'student'): ?>
+        <!-- Back to Home button (Top-left) -->
+        <div class="back-home-container">
+            <a href="student_dashboard.php" class="back-home-btn">
+                <i data-lucide="arrow-left"></i>
+                Back to Home
+            </a>
+        </div>
+        <?php endif; ?>
+
         <div class="header-container">
             <!-- Logo Section -->
             <div class="logo-section">
@@ -55,6 +68,24 @@ $showAIChat = isset($_GET['show_ai_chat']) && $_GET['show_ai_chat'] === 'true';
                         <?php echo ucfirst($current_role); ?>
                     </div>
                 </div>
+                
+                <!-- Notification Bell -->
+                <div class="notification-container">
+                    <button class="notification-btn" id="notificationBtn" title="Notifications">
+                        <i data-lucide="bell"></i>
+                        <span class="notification-count" id="notificationCount">0</span>
+                    </button>
+                    <div class="notification-dropdown" id="notificationDropdown">
+                        <div class="notification-header">
+                            <h4>Notifications</h4>
+                            <button class="mark-all-read" id="markAllReadBtn">Mark All Read</button>
+                        </div>
+                        <div class="notification-list" id="notificationList">
+                            <div class="no-notifications">No notifications yet.</div>
+                        </div>
+                    </div>
+                </div>
+                
                 <a href="logout.php" class="logout-btn">
                     <i data-lucide="log-out" class="logout-icon"></i>
                     Logout
@@ -63,18 +94,34 @@ $showAIChat = isset($_GET['show_ai_chat']) && $_GET['show_ai_chat'] === 'true';
         </div>
     </header>
 
+		<?php if ($current_role === 'librarian'): ?>
+        <!-- Back to Home button (Top-left) -->
+        <div class="back-home-container">
+            <a href="librarian_dashboard.php" class="back-home-btn">
+                <i data-lucide="arrow-left"></i>
+                Back to Home
+            </a>
+        </div>
+        <?php endif; ?>
     <!-- Navigation Bar -->
     <nav class="main-nav">
         <div class="nav-container">
-            <a href="books_available.php" class="nav-link <?php echo (basename($_SERVER['PHP_SELF']) == 'books_available.php') ? 'active' : ''; ?>">
+            
+            <?php if ($current_role === 'librarian'): ?>
+				<a href="books_available_librarian.php" class="nav-link <?php echo (basename($_SERVER['PHP_SELF']) == 'books_available.php') ? 'active' : ''; ?>">
                 <i data-lucide="search" class="nav-icon"></i>
                 Books Available
-            </a>
-            <?php if ($current_role === 'librarian'): ?>
+				</a>
                 <a href="add_book.php" class="nav-link <?php echo (basename($_SERVER['PHP_SELF']) == 'add_book.php') ? 'active' : ''; ?>">
                     <i data-lucide="plus-circle" class="nav-icon"></i>
                     Add Books
                 </a>
+				
+				<!-- Add this in the librarian navigation section -->
+				<a href="authors.php" class="nav-link <?php echo (basename($_SERVER['PHP_SELF']) == 'authors.php') ? 'active' : ''; ?>">
+					<i data-lucide="users" class="nav-icon"></i>
+					Manage Authors
+				</a>
                 <a href="borrowed_books_librarian.php" class="nav-link <?php echo (basename($_SERVER['PHP_SELF']) == 'borrowed_books_librarian.php') ? 'active' : ''; ?>">
                     <i data-lucide="book-check" class="nav-icon"></i>
                     Manage Borrowed
@@ -83,7 +130,15 @@ $showAIChat = isset($_GET['show_ai_chat']) && $_GET['show_ai_chat'] === 'true';
                     <i data-lucide="users" class="nav-icon"></i>
                     User Management
                 </a>
+                <a href="reports.php" class="nav-link <?php echo (basename($_SERVER['PHP_SELF']) == 'reports.php') ? 'active' : ''; ?>">
+                    <i data-lucide="bar-chart-3" class="nav-icon"></i>
+                    Reports
+                </a>
             <?php else: // student ?>
+			<a href="books_available.php" class="nav-link <?php echo (basename($_SERVER['PHP_SELF']) == 'books_available.php') ? 'active' : ''; ?>">
+                <i data-lucide="search" class="nav-icon"></i>
+                Books Available
+            </a>
                 <a href="borrow_book.php" class="nav-link <?php echo (basename($_SERVER['PHP_SELF']) == 'borrow_book.php') ? 'active' : ''; ?>">
                     <i data-lucide="book-up" class="nav-icon"></i>
                     Borrow a Book
@@ -99,3 +154,87 @@ $showAIChat = isset($_GET['show_ai_chat']) && $_GET['show_ai_chat'] === 'true';
             </a>
         </div>
     </nav>
+</div>
+    <!-- JavaScript for Notifications -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const notificationBtn = document.getElementById('notificationBtn');
+        const notificationDropdown = document.getElementById('notificationDropdown');
+        const notificationList = document.getElementById('notificationList');
+        const notificationCount = document.getElementById('notificationCount');
+        const markAllReadBtn = document.getElementById('markAllReadBtn');
+
+        // Toggle dropdown
+        notificationBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            notificationDropdown.classList.toggle('show');
+            if (notificationDropdown.classList.contains('show')) {
+                loadNotifications();
+            }
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function() {
+            notificationDropdown.classList.remove('show');
+        });
+
+        // Mark all as read
+        markAllReadBtn.addEventListener('click', function() {
+            fetch('mark_notifications_read.php', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        loadNotifications();
+                    }
+                });
+        });
+
+        // Load notifications
+        function loadNotifications() {
+            fetch('get_notifications.php')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        notificationCount.textContent = data.unread_count;
+                        notificationList.innerHTML = '';
+                        if (data.notifications.length === 0) {
+                            notificationList.innerHTML = '<div class="no-notifications">No notifications yet.</div>';
+                        } else {
+                            data.notifications.forEach(notif => {
+                                const item = document.createElement('div');
+                                item.className = `notification-item ${notif.status === 'unread' ? 'unread' : ''}`;
+                                item.innerHTML = `
+                                    <div class="notification-content">
+                                        <p>${notif.message}</p>
+                                        <small>${new Date(notif.date_sent).toLocaleString()}</small>
+                                    </div>
+                                `;
+                                item.addEventListener('click', () => markAsRead(notif.notif_id));
+                                notificationList.appendChild(item);
+                            });
+                        }
+                    }
+                });
+        }
+
+        // Mark single notification as read
+        function markAsRead(notifId) {
+            fetch('mark_notifications_read.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ notif_id: notifId })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    loadNotifications();
+                }
+            });
+        }
+
+        // Load on page load
+        loadNotifications();
+    });
+    </script>
+</body>
+</html>

@@ -1,0 +1,66 @@
+/* Library Status Banner */
+.library-status-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px 20px;
+    border-radius: 12px;
+    margin-bottom: 25px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    border: 1px solid;
+}
+
+.library-status-banner.open {
+    background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+    border-color: #10b981;
+    color: #065f46;
+}
+
+.library-status-banner.closed {
+    background: linear-gradient(135deg, #fef3c7, #fde68a);
+    border-color: #f59e0b;
+    color: #92400e;
+}
+
+.status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+    font-size: 16px;
+}
+
+.status-icon {
+    width: 20px;
+    height: 20px;
+}
+
+.status-details {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+    font-size: 14px;
+}
+
+.hours {
+    font-weight: 500;
+}
+
+.current-time {
+    font-size: 12px;
+    opacity: 0.8;
+}
+
+/* Disabled button styles */
+.btn-action:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background: #9ca3af !important;
+    border-color: #9ca3af !important;
+}
+
+.btn-action:disabled:hover {
+    transform: none !important;
+    box-shadow: none !important;
+}
